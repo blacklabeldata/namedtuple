@@ -7,26 +7,26 @@ import (
 )
 
 // Token Type enum
-type tokenType uint8
+type TokenType uint8
 
 // Lex items
 const (
-	tokenError             tokenType = iota // Lexer Error
-	tokenEOF                                // End of File
-	tokenComment                            // Comment
-	tokenMessage                            // Message keyword
-	tokenVersion                            // Version keyword
-	tokenValueType                          // Value type ID (string, uint8)
-	tokenRequired                           // Required Keyword
-	tokenOptional                           // Optional Keyword
-	tokenVersionNumber                      // Version ID
-	tokenOpenCurlyBracket                   // Left {
-	tokenCloseCurlyBracket                  // Right }
-	tokenOpenArrayBracket                   // Open Array [
-	tokenCloseArrayBracket                  // Close Array ]
-	tokenEquals                             // Equals sign
-	tokenIdentifier                         // Message or Field Name
-	tokenReference                          // Message type reference
+	TokenError             TokenType = iota // Lexer Error
+	TokenEOF                                // End of File
+	TokenComment                            // Comment
+	TokenMessage                            // Message keyword
+	TokenVersion                            // Version keyword
+	TokenValueType                          // Value type ID (string, uint8)
+	TokenRequired                           // Required Keyword
+	TokenOptional                           // Optional Keyword
+	TokenVersionNumber                      // Version ID
+	TokenOpenCurlyBracket                   // Left {
+	TokenCloseCurlyBracket                  // Right }
+	TokenOpenArrayBracket                   // Open Array [
+	TokenCloseArrayBracket                  // Close Array ]
+	TokenEquals                             // Equals sign
+	TokenIdentifier                         // Message or Field Name
+	TokenReference                          // Message type reference
 )
 
 // Constant Punctuation and Keywords
@@ -47,7 +47,7 @@ const (
 const eof = -1
 
 // Types
-var types = []string{"string",
+var TypeNames = []string{"string",
 	"uint8", "int8",
 	"uint16", "int16",
 	"uint32", "int32",
@@ -57,53 +57,53 @@ var types = []string{"string",
 }
 
 // Token struct
-type token struct {
-	typ tokenType // Type, such as itemNumber
-	val string    // Value, such as "23.2"
+type Token struct {
+	Type  TokenType // Type, such as itemNumber
+	Value string    // Value, such as "23.2"
 }
 
 // Used to print tokens
-func (t token) String() string {
-	switch t.typ {
-	case tokenEOF:
+func (t Token) String() string {
+	switch t.Type {
+	case TokenEOF:
 		return "EOF"
-	case tokenError:
-		return t.val
+	case TokenError:
+		return t.Value
 	}
-	if len(t.val) > 10 {
-		return fmt.Sprintf("%.10q...", t.val)
+	if len(t.Value) > 10 {
+		return fmt.Sprintf("%.10q...", t.Value)
 	}
-	return fmt.Sprintf("%q", t.val)
+	return fmt.Sprintf("%q", t.Value)
 }
 
 // stateFn represents the state of the scanner
 // as a function and returns the next state.
-type stateFn func(*lexer) stateFn
+type stateFn func(*Lexer) stateFn
 
-// New creates a new scanner from the input
-func New(name, input string) *lexer {
-	return &lexer{
-		name:   name,
+// NewLexer creates a new scanner from the input
+func NewLexer(name, input string) *Lexer {
+	return &Lexer{
+		Name:   name,
 		input:  input,
 		state:  lexText,
-		tokens: make(chan token, 2),
+		tokens: make(chan Token, 2),
 	}
 }
 
-// lexer holds the state of the scanner
-type lexer struct {
-	name   string     // Used to error reports
+// Lexer holds the state of the scanner
+type Lexer struct {
+	Name   string     // Used to error reports
 	input  string     // the string being scanned
-	start  int        // start position of this item
-	pos    int        // current position in the input
-	width  int        // width of last rune read
+	Start  int        // start position of this item
+	Pos    int        // current position in the input
+	Width  int        // width of last rune read
 	state  stateFn    // next state function
-	tokens chan token // channel of scanned tokens
+	tokens chan Token // channel of scanned tokens
 }
 
 // Run lexes the input by executing state functions
 // until the state is nil
-func (l *lexer) run() {
+func (l *Lexer) run() {
 	for state := lexText; state != nil; {
 		state = state(l)
 	}
@@ -111,48 +111,48 @@ func (l *lexer) run() {
 }
 
 // emit passes an item pack to the client
-func (l *lexer) emit(t tokenType) {
-	l.tokens <- token{t, l.input[l.start:l.pos]}
-	l.start = l.pos
+func (l *Lexer) emit(t TokenType) {
+	l.tokens <- Token{t, l.input[l.Start:l.Pos]}
+	l.Start = l.Pos
 }
 
-func (l *lexer) remaining() string {
-	return l.input[l.pos:]
+func (l *Lexer) remaining() string {
+	return l.input[l.Pos:]
 }
 
-func (l *lexer) skipWhitespace() {
+func (l *Lexer) skipWhitespace() {
 	l.acceptRun(" \t\r\n")
 	l.ignore()
 }
 
-func (l *lexer) next() (r rune) {
-	if l.pos >= len(l.input) {
-		l.width = 0
+func (l *Lexer) next() (r rune) {
+	if l.Pos >= len(l.input) {
+		l.Width = 0
 		return eof
 	}
-	r, l.width = utf8.DecodeRuneInString(l.remaining())
-	l.pos += l.width
+	r, l.Width = utf8.DecodeRuneInString(l.remaining())
+	l.Pos += l.Width
 	return
 }
 
 // ignore steps over the pending input before this point
-func (l *lexer) ignore() {
-	l.start = l.pos
+func (l *Lexer) ignore() {
+	l.Start = l.Pos
 }
 
 // backup steps back one rune
-func (l *lexer) backup() {
-	l.pos -= l.width
+func (l *Lexer) backup() {
+	l.Pos -= l.Width
 }
 
 // peek returns but does not consume the next rune in the input
-func (l *lexer) peek() (r rune) {
+func (l *Lexer) peek() (r rune) {
 	r = l.next()
 	l.backup()
 	return
 }
 
-func (l *lexer) nextToken() token {
+func (l *Lexer) NextToken() Token {
 	for {
 		select {
 		case item := <-l.tokens:
@@ -166,7 +166,7 @@ func (l *lexer) nextToken() token {
 
 // accept consumes the next rune
 // if it's in the valid set
-func (l *lexer) accept(valid string) bool {
+func (l *Lexer) accept(valid string) bool {
 	if strings.IndexRune(valid, l.next()) >= 0 {
 		return true
 	}
@@ -175,7 +175,7 @@ func (l *lexer) accept(valid string) bool {
 }
 
 // consumes a run of runes from the valid set
-func (l *lexer) acceptRun(valid string) {
+func (l *Lexer) acceptRun(valid string) {
 	for strings.IndexRune(valid, l.next()) >= 0 {
 	}
 	l.backup()
@@ -184,18 +184,18 @@ func (l *lexer) acceptRun(valid string) {
 // errorf returns an error token and terminates the scan
 // by passing back a nil pointer that will be the next
 // state thus terminating the lexer
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.tokens <- token{tokenError, fmt.Sprintf(format, args...)}
+func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
+	l.tokens <- Token{TokenError, fmt.Sprintf(format, args...)}
 	return nil
 }
 
 // Main lexer loop
-func lexText(l *lexer) stateFn {
+func lexText(l *Lexer) stateFn {
 	for {
 		l.skipWhitespace()
 
 		if strings.HasPrefix(l.remaining(), comment) { // Start comment
-			if l.pos > l.start {
+			if l.Pos > l.Start {
 				return lexComment // state function which lexes a comment
 			}
 		} else if strings.HasPrefix(l.remaining(), message) { // Start message
@@ -207,12 +207,12 @@ func lexText(l *lexer) stateFn {
 		} else if strings.HasPrefix(l.remaining(), optional) { // Start optional field
 			return lexField // state function which lexes a field
 		} else if strings.HasPrefix(l.remaining(), closeScope) { // Close scope
-			l.emit(tokenCloseCurlyBracket)
+			l.emit(TokenCloseCurlyBracket)
 		} else {
 			switch r := l.next(); {
 
 			case r == eof: // reached EOF?
-				l.emit(tokenEOF)
+				l.emit(TokenEOF)
 				break
 			default:
 				l.errorf("unknown token")
@@ -225,21 +225,21 @@ func lexText(l *lexer) stateFn {
 }
 
 // Lexes a comment line
-func lexComment(l *lexer) stateFn {
+func lexComment(l *Lexer) stateFn {
 	l.skipWhitespace()
 
 	for strings.HasPrefix(l.remaining(), comment) {
 		// skip comment //
-		l.pos += len(comment)
+		l.Pos += len(comment)
 
 		// find next new line and add location to pos which
 		// advances the scanner
 		if index := strings.Index(l.remaining(), "\n"); index > 0 {
-			l.pos += index
+			l.Pos += index
 		}
 
 		// emit the comment string
-		l.emit(tokenComment)
+		l.emit(TokenComment)
 
 		l.skipWhitespace()
 	}
@@ -248,12 +248,12 @@ func lexComment(l *lexer) stateFn {
 	return lexText
 }
 
-func lexMessage(l *lexer) stateFn {
+func lexMessage(l *Lexer) stateFn {
 	// skip message keyword
-	l.pos += len(message)
+	l.Pos += len(message)
 
 	// emit keyword
-	l.emit(tokenMessage)
+	l.emit(TokenMessage)
 
 	for strings.HasPrefix(l.remaining(), " ") {
 		l.ignore()
@@ -261,85 +261,85 @@ func lexMessage(l *lexer) stateFn {
 	return lexIdentifier
 }
 
-func lexIdentifier(l *lexer) stateFn {
+func lexIdentifier(l *Lexer) stateFn {
 	l.skipWhitespace()
 
 	for {
 
 		if strings.HasPrefix(l.remaining(), openScope) {
-			l.emit(tokenIdentifier)
+			l.emit(TokenIdentifier)
 			return lexMessageBody
 		}
 
 		if l.next() == eof {
-			l.emit(tokenEOF)
+			l.emit(TokenEOF)
 			return nil
 		}
 
 		// switch r := l.next(); {
 		// case unicode.IsSpace(r):
-		// 	l.ignore()
+		//  l.ignore()
 		// case unicode.IsLetter(r) || unicode.IsDigit(r):
-		// 	insideId = true
+		//  insideId = true
 		// case r == '.' || r == '-' || r == '_':
 		// }
 	}
 }
 
-// func lexIdentifier(l *lexer) stateFn {
+// func lexIdentifier(l *Lexer) stateFn {
 
-// 	// find open bracket
-// 	if index := strings.IndexAny(l.input[l.pos:], "{"); index > 0 {
+//  // find open bracket
+//  if index := strings.IndexAny(l.input[l.Pos:], "{"); index > 0 {
 
-// 		// update pos without open bracket
-// 		l.pos += (index - 1)
+//      // update pos without open bracket
+//      l.Pos += (index - 1)
 
-// 		// emit identifier
-// 		l.emit(tokenIdentifier)
+//      // emit identifier
+//      l.emit(TokenIdentifier)
 
-// 		// lex message contents
-// 		return lexMessageBody
-// 	}
-// 	return l.errorf("missing message body")
+//      // lex message contents
+//      return lexMessageBody
+//  }
+//  return l.errorf("missing message body")
 // }
 
-func lexMessageBody(l *lexer) stateFn {
-	l.pos += len(openScope)
-	l.emit(tokenOpenCurlyBracket)
+func lexMessageBody(l *Lexer) stateFn {
+	l.Pos += len(openScope)
+	l.emit(TokenOpenCurlyBracket)
 	return lexText
 }
 
-func lexVersion(l *lexer) stateFn {
-	l.pos += len(version)
-	l.emit(tokenVersion)
+func lexVersion(l *Lexer) stateFn {
+	l.Pos += len(version)
+	l.emit(TokenVersion)
 	l.skipWhitespace()
 
 	l.acceptRun("0123456789")
-	l.emit(tokenVersionNumber)
+	l.emit(TokenVersionNumber)
 	l.skipWhitespace()
 
 	if strings.HasPrefix(l.remaining(), openScope) {
-		l.pos += len(openScope)
-		l.emit(tokenOpenCurlyBracket)
+		l.Pos += len(openScope)
+		l.emit(TokenOpenCurlyBracket)
 	} else {
 		return l.errorf("missing version body")
 	}
 	return lexText
 }
 
-func lexField(l *lexer) stateFn {
+func lexField(l *Lexer) stateFn {
 	l.skipWhitespace()
 	lexComment(l)
 
 	if strings.HasPrefix(l.remaining(), required) {
-		l.pos += len(required)
-		l.emit(tokenRequired)
+		l.Pos += len(required)
+		l.emit(TokenRequired)
 	} else if strings.HasPrefix(l.remaining(), optional) {
-		l.pos += len(optional)
-		l.emit(tokenOptional)
+		l.Pos += len(optional)
+		l.emit(TokenOptional)
 	} else if strings.HasPrefix(l.remaining(), closeScope) {
-		l.pos += len(closeScope)
-		l.emit(tokenCloseCurlyBracket)
+		l.Pos += len(closeScope)
+		l.emit(TokenCloseCurlyBracket)
 		return lexText
 	} else {
 		return l.errorf("expected 'required' or 'optional'")
@@ -349,7 +349,7 @@ func lexField(l *lexer) stateFn {
 	lexIdentifier(l)
 	l.skipWhitespace()
 	if l.accept("=") {
-		l.emit(tokenEquals)
+		l.emit(TokenEquals)
 	} else {
 		return l.errorf("expected '=' sign")
 	}
@@ -359,31 +359,31 @@ func lexField(l *lexer) stateFn {
 	return lexField
 }
 
-func lexType(l *lexer) stateFn {
+func lexType(l *Lexer) stateFn {
 	l.skipWhitespace()
 	if strings.HasPrefix(l.remaining(), openArray) {
-		l.pos += len(openArray)
-		l.emit(tokenOpenArrayBracket)
+		l.Pos += len(openArray)
+		l.emit(TokenOpenArrayBracket)
 
 		l.skipWhitespace()
 		lexType(l)
 		l.skipWhitespace()
 
 		if strings.HasPrefix(l.remaining(), closeArray) {
-			l.pos += len(closeArray)
-			l.emit(tokenCloseArrayBracket)
+			l.Pos += len(closeArray)
+			l.emit(TokenCloseArrayBracket)
 			return lexField
 		} else {
 			return l.errorf("expected ]")
 		}
 	} else if strings.HasPrefix(l.remaining(), dollarRef) {
-		l.emit(tokenReference)
+		l.emit(TokenReference)
 		lexIdentifier(l)
 		return lexField
 	} else {
-		for _, t := range types {
+		for _, t := range TypeNames {
 			if strings.HasPrefix(l.remaining(), t) {
-				l.emit(tokenValueType)
+				l.emit(TokenValueType)
 				return lexField
 			}
 		}
