@@ -80,8 +80,8 @@ func (t token) String() string {
 // as a function and returns the next state.
 type stateFn func(*lexer) stateFn
 
-// lex creates a new scanner from the input
-func lex(name, input string) *lexer {
+// New creates a new scanner from the input
+func New(name, input string) *lexer {
 	return &lexer{
 		name:   name,
 		input:  input,
