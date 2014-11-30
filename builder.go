@@ -7,8 +7,26 @@ import (
 	"time"
 )
 
+func NewBuilder(t TupleType, buffer []byte) TupleBuilder {
+
+	// init instance variables
+	fields := make(map[string]Field)
+	offsets := make(map[string]int)
+
+	// populate instance fields for builder
+	for _, version := range t.Versions() {
+		for _, field := range version.Fields {
+			fields[field.Name] = field
+			offsets[field.Name] = 0
+		}
+	}
+
+	// create new builder
+	return TupleBuilder{fields: fields, offsets: offsets, tupleType: t, buffer: buffer, pos: 0}
+}
+
 type TupleBuilder struct {
-	fields    map[string]*Field
+	fields    map[string]Field
 	offsets   map[string]int
 	tupleType TupleType
 	buffer    []byte
@@ -40,7 +58,7 @@ func (b *TupleBuilder) PutUint8(field string, value uint8) (wrote int, err error
 
 	// minimum bytes is 2 (type code + value)
 	if len(b.buffer) < b.pos+2 {
-		wrote, err = 0, xbinary.ErrOutOfRange
+		return 0, xbinary.ErrOutOfRange
 	} else {
 
 		// write type code
@@ -67,7 +85,7 @@ func (b *TupleBuilder) PutInt8(field string, value int8) (wrote int, err error) 
 
 	// minimum bytes is 2 (type code + value)
 	if len(b.buffer) < b.pos+2 {
-		wrote, err = 0, xbinary.ErrOutOfRange
+		return 0, xbinary.ErrOutOfRange
 	} else {
 
 		// write type code
@@ -96,7 +114,7 @@ func (b *TupleBuilder) PutUint16(field string, value uint16) (wrote int, err err
 
 		// minimum bytes is 3 (type code + value)
 		if len(b.buffer) < b.pos+2 {
-			wrote, err = 0, xbinary.ErrOutOfRange
+			return 0, xbinary.ErrOutOfRange
 		}
 
 		// write type code

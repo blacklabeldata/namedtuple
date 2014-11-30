@@ -33,6 +33,11 @@ func (t *TupleType) AddVersion(fields ...Field) {
 	}
 }
 
+func (t *TupleType) Contains(field string) bool {
+	_, exists := t.fields[field]
+	return exists
+}
+
 func (t *TupleType) Offset(field string) (offset int, exists bool) {
 	offset, exists = t.fields[field]
 	return
