@@ -151,7 +151,6 @@ func (b *TupleBuilder) PutUint16(field string, value uint16) (wrote int, err err
 		// wrote 3 bytes
 		return 3, nil
 	}
-	return
 }
 
 func (b *TupleBuilder) PutInt16(field string, value int16) (wrote int, err error) {
@@ -161,11 +160,11 @@ func (b *TupleBuilder) PutInt16(field string, value int16) (wrote int, err error
 		return 0, err
 	}
 
-	if uint8(value) < math.MaxUint8 {
+	if uint16(value) < math.MaxUint8 {
 
 		// minimum bytes is 3 (type code + value)
 		if len(b.buffer) < b.pos+2 {
-			wrote, err = 0, xbinary.ErrOutOfRange
+			return 0, xbinary.ErrOutOfRange
 		}
 
 		// write type code
@@ -202,7 +201,6 @@ func (b *TupleBuilder) PutInt16(field string, value int16) (wrote int, err error
 		// wrote 3 bytes
 		return 3, nil
 	}
-	return
 }
 
 func (b *TupleBuilder) PutUint32(field string, value uint32) (wrote int, err error) {
@@ -216,7 +214,7 @@ func (b *TupleBuilder) PutUint32(field string, value uint32) (wrote int, err err
 
 		// minimum bytes is 2 (type code + value)
 		if len(b.buffer) < b.pos+2 {
-			wrote, err = 0, xbinary.ErrOutOfRange
+			return 0, xbinary.ErrOutOfRange
 		}
 
 		// write type code
@@ -273,7 +271,6 @@ func (b *TupleBuilder) PutUint32(field string, value uint32) (wrote int, err err
 		// wrote 5 bytes
 		return 5, nil
 	}
-	return
 }
 
 func (b *TupleBuilder) PutInt32(field string, value int32) (wrote int, err error) {
@@ -288,7 +285,7 @@ func (b *TupleBuilder) PutInt32(field string, value int32) (wrote int, err error
 
 		// minimum bytes is 2 (type code + value)
 		if len(b.buffer) < b.pos+2 {
-			wrote, err = 0, xbinary.ErrOutOfRange
+			return 0, xbinary.ErrOutOfRange
 		}
 
 		// write type code
@@ -345,7 +342,6 @@ func (b *TupleBuilder) PutInt32(field string, value int32) (wrote int, err error
 		// wrote 5 bytes
 		return 5, nil
 	}
-	return
 }
 
 func (b *TupleBuilder) PutUint64(field string, value uint64) (wrote int, err error) {
@@ -359,7 +355,7 @@ func (b *TupleBuilder) PutUint64(field string, value uint64) (wrote int, err err
 
 		// minimum bytes is 2 (type code + value)
 		if len(b.buffer) < b.pos+2 {
-			wrote, err = 0, xbinary.ErrOutOfRange
+			return 0, xbinary.ErrOutOfRange
 		}
 
 		// write type code
@@ -436,7 +432,6 @@ func (b *TupleBuilder) PutUint64(field string, value uint64) (wrote int, err err
 		// wrote 9 bytes
 		return 9, nil
 	}
-	return
 }
 
 func (b *TupleBuilder) PutInt64(field string, value int64) (wrote int, err error) {
@@ -451,7 +446,7 @@ func (b *TupleBuilder) PutInt64(field string, value int64) (wrote int, err error
 
 		// minimum bytes is 3 (type code + value)
 		if len(b.buffer) < b.pos+2 {
-			wrote, err = 0, xbinary.ErrOutOfRange
+			return 0, xbinary.ErrOutOfRange
 		}
 
 		// write type code
@@ -528,7 +523,6 @@ func (b *TupleBuilder) PutInt64(field string, value int64) (wrote int, err error
 		// wrote 9 bytes
 		return 9, nil
 	}
-	return
 }
 
 func (b *TupleBuilder) PutFloat32(field string, value float32) (wrote int, err error) {
@@ -571,7 +565,7 @@ func (b *TupleBuilder) PutFloat64(field string, value float64) (wrote int, err e
 
 	// minimum bytes is 9 (type code + value)
 	if len(b.buffer) < b.pos+9 {
-		wrote, err = 0, xbinary.ErrOutOfRange
+		return 0, xbinary.ErrOutOfRange
 	} else {
 
 		// write type code
