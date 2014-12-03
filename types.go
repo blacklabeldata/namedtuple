@@ -23,12 +23,15 @@ const (
 	Float32ArrayField
 	Float64Field
 	Float64ArrayField
-	DateField
-	DateArrayField
+	TimestampField
+	TimestampArrayField
 	TupleField
 	TupleArrayField
 	StringField
 	StringArrayField
+	DateField
+	DateArrayField
+	BooleanField
 )
 
 // TypeCode represents a field type

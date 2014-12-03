@@ -33,8 +33,12 @@ type TupleBuilder struct {
 	pos       int
 }
 
-func (b *TupleBuilder) available() int {
+func (b TupleBuilder) available() int {
 	return len(b.buffer) - b.pos
+}
+
+func (b *TupleBuilder) reset() {
+	b.pos = 0
 }
 
 func (t *TupleBuilder) typeCheck(fieldName string, fieldType FieldType) error {
@@ -132,15 +136,15 @@ func (b *TupleBuilder) PutUint16(field string, value uint16) (wrote int, err err
 		return 2, nil
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedShort16Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, value)
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedShort16Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -182,15 +186,15 @@ func (b *TupleBuilder) PutInt16(field string, value int16) (wrote int, err error
 		return 2, nil
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(Short16Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutInt16(b.buffer, b.pos+1, value)
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(Short16Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -232,15 +236,14 @@ func (b *TupleBuilder) PutUint32(field string, value uint32) (wrote int, err err
 		return 2, nil
 	} else if value < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedInt16Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(value))
 		if err != nil {
 			return 1, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedInt16Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -252,15 +255,15 @@ func (b *TupleBuilder) PutUint32(field string, value uint32) (wrote int, err err
 		return 3, nil
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedInt32Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, value)
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedInt32Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -303,15 +306,15 @@ func (b *TupleBuilder) PutInt32(field string, value int32) (wrote int, err error
 		return 2, nil
 	} else if unsigned < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(Int16Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutInt16(b.buffer, b.pos+1, int16(value))
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(Int16Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -323,15 +326,15 @@ func (b *TupleBuilder) PutInt32(field string, value int32) (wrote int, err error
 		return 3, nil
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(Int32Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutInt32(b.buffer, b.pos+1, value)
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(Int32Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -373,15 +376,15 @@ func (b *TupleBuilder) PutUint64(field string, value uint64) (wrote int, err err
 		return 2, nil
 	} else if value < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedLong16Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(value))
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedLong16Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -393,15 +396,15 @@ func (b *TupleBuilder) PutUint64(field string, value uint64) (wrote int, err err
 		return 3, nil
 	} else if value < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedLong32Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(value))
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedLong32Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -413,15 +416,14 @@ func (b *TupleBuilder) PutUint64(field string, value uint64) (wrote int, err err
 		return 5, nil
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedLong64Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, value)
 		if err != nil {
 			return 1, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedLong64Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -464,15 +466,15 @@ func (b *TupleBuilder) PutInt64(field string, value int64) (wrote int, err error
 		return 2, nil
 	} else if unsigned < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(Long16Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutInt16(b.buffer, b.pos+1, int16(value))
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(Long16Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -484,15 +486,15 @@ func (b *TupleBuilder) PutInt64(field string, value int64) (wrote int, err error
 		return 3, nil
 	} else if unsigned < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(Long32Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutInt32(b.buffer, b.pos+1, int32(value))
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(Long32Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -504,15 +506,15 @@ func (b *TupleBuilder) PutInt64(field string, value int64) (wrote int, err error
 		return 5, nil
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(Long64Code.OpCode)
-
 		// write value
 		// length check performed by xbinary
 		wrote, err = xbinary.LittleEndian.PutInt64(b.buffer, b.pos+1, value)
 		if err != nil {
 			return 1, err
 		}
+
+		// write type code
+		b.buffer[b.pos] = byte(Long64Code.OpCode)
 
 		// set field offset
 		b.offsets[field] = b.pos
@@ -532,27 +534,22 @@ func (b *TupleBuilder) PutFloat32(field string, value float32) (wrote int, err e
 		return 0, err
 	}
 
-	// minimum bytes is 5 (type code + value)
-	if len(b.buffer) < b.pos+5 {
-		wrote, err = 0, xbinary.ErrOutOfRange
-	} else {
-
-		// write type code
-		b.buffer[b.pos] = byte(FloatCode.OpCode)
-
-		// write value
-		// length check performed by xbinary
-		wrote, err = xbinary.LittleEndian.PutFloat32(b.buffer, b.pos+1, value)
-		if err != nil {
-			return 1, err
-		}
-
-		// set field offset
-		b.offsets[field] = b.pos
-
-		// incr pos
-		b.pos += 5
+	// write value
+	// length check performed by xbinary
+	wrote, err = xbinary.LittleEndian.PutFloat32(b.buffer, b.pos+1, value)
+	if err != nil {
+		return 0, err
 	}
+
+	// write type code
+	b.buffer[b.pos] = byte(FloatCode.OpCode)
+
+	// set field offset
+	b.offsets[field] = b.pos
+
+	// incr pos
+	b.pos += 5
+
 	return 5, nil
 }
 
@@ -563,39 +560,31 @@ func (b *TupleBuilder) PutFloat64(field string, value float64) (wrote int, err e
 		return 0, err
 	}
 
-	// minimum bytes is 9 (type code + value)
-	if len(b.buffer) < b.pos+9 {
-		return 0, xbinary.ErrOutOfRange
-	} else {
-
-		// write type code
-		b.buffer[b.pos] = byte(DoubleCode.OpCode)
-
-		// write value
-		// length check performed by xbinary
-		wrote, err = xbinary.LittleEndian.PutFloat64(b.buffer, b.pos+1, value)
-		if err != nil {
-			return 1, err
-		}
-
-		// set field offset
-		b.offsets[field] = b.pos
-
-		// incr pos
-		b.pos += 9
+	// write value
+	// length check performed by xbinary
+	wrote, err = xbinary.LittleEndian.PutFloat64(b.buffer, b.pos+1, value)
+	if err != nil {
+		return 1, err
 	}
+
+	// write type code
+	b.buffer[b.pos] = byte(DoubleCode.OpCode)
+
+	// set field offset
+	b.offsets[field] = b.pos
+
+	// incr pos
+	b.pos += 9
+
 	return 9, nil
 }
 
 func (b *TupleBuilder) PutTimestamp(field string, value time.Time) (wrote int, err error) {
 
 	// field type should be
-	if err = b.typeCheck(field, DateField); err != nil {
+	if err = b.typeCheck(field, TimestampField); err != nil {
 		return 0, err
 	}
-
-	// write type code
-	b.buffer[b.pos] = byte(TimestampCode.OpCode)
 
 	// write value
 	// length check performed by xbinary
@@ -603,6 +592,9 @@ func (b *TupleBuilder) PutTimestamp(field string, value time.Time) (wrote int, e
 	if err != nil {
 		return 1, err
 	}
+
+	// write type code
+	b.buffer[b.pos] = byte(TimestampCode.OpCode)
 
 	// set field offset
 	b.offsets[field] = b.pos
@@ -631,7 +623,7 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 		b.buffer[b.pos+1] = byte(size)
 
 		if b.available() < value.Size()+2 {
-			wrote, err = value.Encode(b.buffer[b.pos+2:])
+			wrote, err = value.Write(b.buffer[b.pos+2:])
 		} else {
 			return 2, xbinary.ErrOutOfRange
 		}
@@ -642,11 +634,11 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		if b.available() < value.Size()+3 {
-			wrote, err = value.Encode(b.buffer[b.pos+2:])
+			wrote, err = value.Write(b.buffer[b.pos+2:])
 			wrote += 3
 		} else {
 			return 3, xbinary.ErrOutOfRange
@@ -658,11 +650,11 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		if b.available() < value.Size()+5 {
-			wrote, err = value.Encode(b.buffer[b.pos+5:])
+			wrote, err = value.Write(b.buffer[b.pos+5:])
 			wrote += 5
 		} else {
 			return 5, xbinary.ErrOutOfRange
@@ -674,11 +666,11 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		if b.available() < value.Size()+9 {
-			wrote, err = value.Encode(b.buffer[b.pos+9:])
+			wrote, err = value.Write(b.buffer[b.pos+9:])
 			wrote += 9
 		} else {
 			return 9, xbinary.ErrOutOfRange
@@ -700,62 +692,62 @@ func (b *TupleBuilder) PutString(field string, value string) (wrote int, err err
 	size := len(value)
 	if size < math.MaxUint8 {
 
+		// write length
+		if _, err = xbinary.LittleEndian.PutString(b.buffer, b.pos+2, value); err != nil {
+			return 0, err
+		}
+
 		// write type code
 		b.buffer[b.pos] = byte(String8Code.OpCode)
 
 		// write length
 		b.buffer[b.pos+1] = byte(size)
 
-		// write length
-		if _, err = xbinary.LittleEndian.PutString(b.buffer, b.pos+2, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
-		}
-
 		wrote += size + 2
 	} else if size < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(Tuple16Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutString(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(String16Code.OpCode)
+
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(Tuple32Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutString(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(String32Code.OpCode)
+
 		wrote += 5 + size
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(Tuple64Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutString(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(String64Code.OpCode)
+
 		wrote += 9 + size
 	}
 
@@ -774,62 +766,62 @@ func (b *TupleBuilder) PutUint8Array(field string, value []uint8) (wrote int, er
 	size := len(value)
 	if size < math.MaxUint8 {
 
+		// write length
+		if _, err = xbinary.LittleEndian.PutUint8Array(b.buffer, b.pos+1, value); err != nil {
+			return 2, err
+		}
+
 		// write type code
 		b.buffer[b.pos] = byte(UnsignedByteArray8Code.OpCode)
 
 		// write length
 		b.buffer[b.pos+1] = byte(size)
 
-		// write length
-		if _, err = xbinary.LittleEndian.PutUint8Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
-		}
-
 		wrote += size + 2
 	} else if size < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedByteArray16Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint8Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedByteArray16Code.OpCode)
+
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedByteArray32Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint8Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedByteArray32Code.OpCode)
+
 		wrote += 5 + size
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedByteArray64Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint8Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedByteArray64Code.OpCode)
+
 		wrote += 9 + size
 	}
 
@@ -848,62 +840,62 @@ func (b *TupleBuilder) PutInt8Array(field string, value []int8) (wrote int, err 
 	size := len(value)
 	if size < math.MaxUint8 {
 
+		// write length
+		if _, err = xbinary.LittleEndian.PutInt8Array(b.buffer, b.pos+1, value); err != nil {
+			return 2, err
+		}
+
 		// write type code
 		b.buffer[b.pos] = byte(ByteArray8Code.OpCode)
 
 		// write length
 		b.buffer[b.pos+1] = byte(size)
 
-		// write length
-		if _, err = xbinary.LittleEndian.PutInt8Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
-		}
-
 		wrote += size + 2
 	} else if size < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(ByteArray16Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt8Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(ByteArray16Code.OpCode)
+
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(ByteArray32Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt8Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(ByteArray32Code.OpCode)
+
 		wrote += 5 + size
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(ByteArray64Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt8Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(ByteArray64Code.OpCode)
+
 		wrote += 9 + size
 	}
 
@@ -922,62 +914,62 @@ func (b *TupleBuilder) PutUint16Array(field string, value []uint16) (wrote int, 
 	size := len(value)
 	if size < math.MaxUint8 {
 
+		// write length
+		if _, err = xbinary.LittleEndian.PutUint16Array(b.buffer, b.pos+1, value); err != nil {
+			return 2, err
+		}
+
 		// write type code
 		b.buffer[b.pos] = byte(UnsignedShortArray8Code.OpCode)
 
 		// write length
 		b.buffer[b.pos+1] = byte(size)
 
-		// write length
-		if _, err = xbinary.LittleEndian.PutUint16Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
-		}
-
 		wrote += size + 2
 	} else if size < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedShortArray16Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint16Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedShortArray16Code.OpCode)
+
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedShortArray32Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint16Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedShortArray32Code.OpCode)
+
 		wrote += 5 + size
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedShortArray64Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint16Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedShortArray64Code.OpCode)
+
 		wrote += 9 + size
 	}
 
@@ -996,62 +988,62 @@ func (b *TupleBuilder) PutInt16Array(field string, value []int16) (wrote int, er
 	size := len(value)
 	if size < math.MaxUint8 {
 
+		// write length
+		if _, err = xbinary.LittleEndian.PutInt16Array(b.buffer, b.pos+1, value); err != nil {
+			return 2, err
+		}
+
 		// write type code
 		b.buffer[b.pos] = byte(ShortArray8Code.OpCode)
 
 		// write length
 		b.buffer[b.pos+1] = byte(size)
 
-		// write length
-		if _, err = xbinary.LittleEndian.PutInt16Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
-		}
-
 		wrote += size + 2
 	} else if size < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(ShortArray16Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt16Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(ShortArray16Code.OpCode)
+
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(ShortArray32Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt16Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(ShortArray32Code.OpCode)
+
 		wrote += 5 + size
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(ShortArray64Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt16Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(ShortArray64Code.OpCode)
+
 		wrote += 9 + size
 	}
 
@@ -1070,62 +1062,62 @@ func (b *TupleBuilder) PutUint32Array(field string, value []uint32) (wrote int, 
 	size := len(value)
 	if size < math.MaxUint8 {
 
+		// write length
+		if _, err = xbinary.LittleEndian.PutUint32Array(b.buffer, b.pos+1, value); err != nil {
+			return 2, err
+		}
+
 		// write type code
 		b.buffer[b.pos] = byte(UnsignedIntArray8Code.OpCode)
 
 		// write length
 		b.buffer[b.pos+1] = byte(size)
 
-		// write length
-		if _, err = xbinary.LittleEndian.PutUint32Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
-		}
-
 		wrote += size + 2
 	} else if size < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedIntArray16Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint32Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedIntArray16Code.OpCode)
+
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedIntArray32Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint32Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedIntArray32Code.OpCode)
+
 		wrote += 5 + size
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(UnsignedIntArray64Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint32Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(UnsignedIntArray64Code.OpCode)
+
 		wrote += 9 + size
 	}
 
@@ -1144,62 +1136,62 @@ func (b *TupleBuilder) PutInt32Array(field string, value []int32) (wrote int, er
 	size := len(value)
 	if size < math.MaxUint8 {
 
+		// write length
+		if _, err = xbinary.LittleEndian.PutInt32Array(b.buffer, b.pos+1, value); err != nil {
+			return 2, err
+		}
+
 		// write type code
 		b.buffer[b.pos] = byte(IntArray8Code.OpCode)
 
 		// write length
 		b.buffer[b.pos+1] = byte(size)
 
-		// write length
-		if _, err = xbinary.LittleEndian.PutInt32Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
-		}
-
 		wrote += size + 2
 	} else if size < math.MaxUint16 {
 
-		// write type code
-		b.buffer[b.pos] = byte(IntArray16Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt32Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(IntArray16Code.OpCode)
+
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
 
-		// write type code
-		b.buffer[b.pos] = byte(IntArray32Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt32Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(IntArray32Code.OpCode)
+
 		wrote += 5 + size
 	} else {
 
-		// write type code
-		b.buffer[b.pos] = byte(IntArray64Code.OpCode)
-
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt32Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
+		// write type code
+		b.buffer[b.pos] = byte(IntArray64Code.OpCode)
+
 		wrote += 9 + size
 	}
 
@@ -1226,7 +1218,7 @@ func (b *TupleBuilder) PutUint64Array(field string, value []uint64) (wrote int, 
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
+			return 2, err
 		}
 
 		wrote += size + 2
@@ -1237,12 +1229,12 @@ func (b *TupleBuilder) PutUint64Array(field string, value []uint64) (wrote int, 
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint64Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
@@ -1252,12 +1244,12 @@ func (b *TupleBuilder) PutUint64Array(field string, value []uint64) (wrote int, 
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint64Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
 		wrote += 5 + size
 	} else {
@@ -1267,12 +1259,12 @@ func (b *TupleBuilder) PutUint64Array(field string, value []uint64) (wrote int, 
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutUint64Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
 		wrote += 9 + size
 	}
@@ -1300,7 +1292,7 @@ func (b *TupleBuilder) PutInt64Array(field string, value []int64) (wrote int, er
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
+			return 2, err
 		}
 
 		wrote += size + 2
@@ -1311,12 +1303,12 @@ func (b *TupleBuilder) PutInt64Array(field string, value []int64) (wrote int, er
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
@@ -1326,12 +1318,12 @@ func (b *TupleBuilder) PutInt64Array(field string, value []int64) (wrote int, er
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
 		wrote += 5 + size
 	} else {
@@ -1341,12 +1333,12 @@ func (b *TupleBuilder) PutInt64Array(field string, value []int64) (wrote int, er
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
 		wrote += 9 + size
 	}
@@ -1374,7 +1366,7 @@ func (b *TupleBuilder) PutFloat32Array(field string, value []float32) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutFloat32Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
+			return 2, err
 		}
 
 		wrote += size + 2
@@ -1385,12 +1377,12 @@ func (b *TupleBuilder) PutFloat32Array(field string, value []float32) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutFloat32Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
@@ -1400,12 +1392,12 @@ func (b *TupleBuilder) PutFloat32Array(field string, value []float32) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutFloat32Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
 		wrote += 5 + size
 	} else {
@@ -1415,12 +1407,12 @@ func (b *TupleBuilder) PutFloat32Array(field string, value []float32) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutFloat32Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
 		wrote += 9 + size
 	}
@@ -1448,7 +1440,7 @@ func (b *TupleBuilder) PutFloat64Array(field string, value []float64) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutFloat64Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
+			return 2, err
 		}
 
 		wrote += size + 2
@@ -1459,12 +1451,12 @@ func (b *TupleBuilder) PutFloat64Array(field string, value []float64) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutFloat64Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
@@ -1474,12 +1466,12 @@ func (b *TupleBuilder) PutFloat64Array(field string, value []float64) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutFloat64Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
 		wrote += 5 + size
 	} else {
@@ -1489,12 +1481,12 @@ func (b *TupleBuilder) PutFloat64Array(field string, value []float64) (wrote int
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutFloat64Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
 		wrote += 9 + size
 	}
@@ -1528,7 +1520,7 @@ func (b *TupleBuilder) PutTimestampArray(field string, times []time.Time) (wrote
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+1, value); err != nil {
-			return 2, xbinary.ErrOutOfRange
+			return 2, err
 		}
 
 		wrote += size + 2
@@ -1539,12 +1531,12 @@ func (b *TupleBuilder) PutTimestampArray(field string, times []time.Time) (wrote
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1, uint16(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+3, value); err != nil {
-			return 3, xbinary.ErrOutOfRange
+			return 3, err
 		}
 		wrote += 3 + size
 	} else if size < math.MaxUint32 {
@@ -1554,12 +1546,12 @@ func (b *TupleBuilder) PutTimestampArray(field string, times []time.Time) (wrote
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1, uint32(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+5, value); err != nil {
-			return 5, xbinary.ErrOutOfRange
+			return 5, err
 		}
 		wrote += 5 + size
 	} else {
@@ -1569,12 +1561,12 @@ func (b *TupleBuilder) PutTimestampArray(field string, times []time.Time) (wrote
 
 		// write length
 		if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1, uint64(size)); err != nil {
-			return 1, xbinary.ErrOutOfRange
+			return 1, err
 		}
 
 		// write value
 		if _, err = xbinary.LittleEndian.PutInt64Array(b.buffer, b.pos+9, value); err != nil {
-			return 9, xbinary.ErrOutOfRange
+			return 9, err
 		}
 		wrote += 9 + size
 	}
@@ -1617,7 +1609,7 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 			b.buffer[b.pos+1+wrote] = byte(size)
 
 			// write length
-			if written, err := tuple.Encode(b.buffer[b.pos+2+wrote:]); err != nil {
+			if written, err := tuple.Write(b.buffer[b.pos+2+wrote:]); err != nil {
 				return 2 + written + wrote, err
 			}
 
@@ -1629,11 +1621,11 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 
 			// write length
 			if _, err = xbinary.LittleEndian.PutUint16(b.buffer, b.pos+1+wrote, uint16(size)); err != nil {
-				return 1, xbinary.ErrOutOfRange
+				return 1, err
 			}
 
 			// write value
-			if written, err := tuple.Encode(b.buffer[b.pos+3+wrote:]); err != nil {
+			if written, err := tuple.Write(b.buffer[b.pos+3+wrote:]); err != nil {
 				return 3 + written + wrote, err
 			}
 
@@ -1645,11 +1637,11 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 
 			// write length
 			if _, err = xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1+wrote, uint32(size)); err != nil {
-				return 1, xbinary.ErrOutOfRange
+				return 1, err
 			}
 
 			// write value
-			if written, err := tuple.Encode(b.buffer[b.pos+5+wrote:]); err != nil {
+			if written, err := tuple.Write(b.buffer[b.pos+5+wrote:]); err != nil {
 				return 5 + written + wrote, err
 			}
 			wrote += 5 + size
@@ -1660,11 +1652,11 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 
 			// write length
 			if _, err = xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1+wrote, uint64(size)); err != nil {
-				return 1, xbinary.ErrOutOfRange
+				return 1, err
 			}
 
 			// write value
-			if written, err := tuple.Encode(b.buffer[b.pos+9+wrote:]); err != nil {
+			if written, err := tuple.Write(b.buffer[b.pos+9+wrote:]); err != nil {
 				return 9 + written + wrote, err
 			}
 			wrote += 9 + size
@@ -1685,6 +1677,10 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 // 	// return
 // }
 
-func (t *TupleBuilder) Build() Tuple {
-	return Tuple{}
+func (b *TupleBuilder) Build() (Tuple, error) {
+	header, err := NewTupleHeader(*b)
+	if err != nil {
+		return NIL, err
+	}
+	return Tuple{data: b.buffer[:b.pos], Header: header}, nil
 }

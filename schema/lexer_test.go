@@ -1,10 +1,10 @@
 package schema
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
+	// "time"
 )
 
 func TestComment(t *testing.T) {
@@ -91,35 +91,35 @@ func TestLoop(t *testing.T) {
 	})
 	// lexText(l)
 	//
-	var start = time.Now()
+	// var start = time.Now()
 	go l.run()
-	fmt.Println(time.Now().Sub(start).Seconds())
+	// fmt.Println(time.Now().Sub(start).Seconds())
 }
 
-func TestLoop2(t *testing.T) {
-	text := `
-    // this is a comment
-    // This is also a comment
-    // This is one too
-    message
-    `
+// func TestLoop2(t *testing.T) {
+// 	text := `
+//     // this is a comment
+//     // This is also a comment
+//     // This is one too
+//     message
+//     `
 
-	// var token Token
-	var tokens = make(chan Token, 2)
-	l := NewLexer("tuple", text, func(t Token) {
-		// fmt.Println("handler: ", t)
-		// token = t
-		tokens <- t
-		if t.Type == TokenEOF {
-			close(tokens)
-		}
-	})
-	// lexText(l)
-	//
-	go l.run()
-	var start = time.Now()
-	for token := range tokens {
-		fmt.Println("handler: ", token)
-	}
-	fmt.Println(time.Now().Sub(start).Seconds())
-}
+// 	// var token Token
+// 	var tokens = make(chan Token, 2)
+// 	l := NewLexer("tuple", text, func(t Token) {
+// 		// fmt.Println("handler: ", t)
+// 		// token = t
+// 		tokens <- t
+// 		if t.Type == TokenEOF {
+// 			close(tokens)
+// 		}
+// 	})
+// 	// lexText(l)
+// 	//
+// 	go l.run()
+// 	var start = time.Now()
+// 	for token := range tokens {
+// 		fmt.Println("handler: ", token)
+// 	}
+// 	fmt.Println(time.Now().Sub(start).Seconds())
+// }

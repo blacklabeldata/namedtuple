@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/eliquious/xbinary"
 	"hash/fnv"
+	"math"
 	// "sync"
 )
 
@@ -71,8 +72,94 @@ type Field struct {
 // 	ReferenceType string
 // }
 
+func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
+
+	// validation of required fields
+	var tupleVersion uint8
+	var missingField string
+	var fieldSize uint8
+	var fieldCount int
+
+	totalFieldCount := uint32(len(b.tupleType.fields))
+	offsets := make([]uint64, totalFieldCount)
+
+	// iterate over all the versions
+	for _, version := range b.tupleType.Versions() {
+	OUTER:
+
+		// iterate over all the fields for the current version
+		for _, field := range version.Fields {
+
+			// get offset for field
+			offset, exists := b.offsets[field.Name]
+
+			// if the field is required, determine if it has been added to the builder
+			if field.Required {
+
+				// if the field has not been written
+				// exit the loop and save the missing field name
+				if !exists {
+					missingField = field.Name
+					break OUTER
+				}
+
+				// set byte offset of field in tuple data
+				offsets[fieldCount] = uint64(offset)
+			} else {
+
+				// if the optional fields was not written, encode a maximum offset
+				if !exists {
+
+					// set byte offset of field in tuple data
+					offsets[fieldCount] = uint64(math.MaxUint64)
+
+				} else {
+					// if the optional field does exist
+					// set byte offset of field in tuple data
+					offsets[fieldCount] = uint64(offset)
+				}
+			}
+		}
+
+		// increment the version number after all required fields have been satisfied
+		tupleVersion++
+	}
+
+	// If the first version is missing a field, return an error
+	// At least one version must contain all the required fields.
+	// The version number will increment for each version which
+	// contains all the required fields.
+	if tupleVersion < 1 {
+		return TupleHeader{}, errors.New("Missing required field: " + missingField)
+	}
+
+	// TODO: Add Field level validation
+
+	// Calculate minimum offset for accessing all fields in data
+	// If the total data size is < 256 bytes, all field offsets
+	if b.pos < math.MaxUint8-1 {
+		fieldSize = 1
+	} else if b.pos < math.MaxUint16 {
+		fieldSize = 2
+	} else if b.pos < math.MaxUint32 {
+		fieldSize = 4
+	} else {
+		fieldSize = 8
+	}
+
+	return TupleHeader{
+		ProtocolVersion: 0,
+		TupleVersion:    tupleVersion,
+		Hash:            b.tupleType.Hash,
+		FieldCount:      totalFieldCount,
+		FieldSize:       fieldSize,
+		ContentLength:   uint64(b.pos),
+		Offsets:         offsets,
+		Type:            b.tupleType,
+	}, nil
+}
+
 type TupleHeader struct {
-	// skip magic num      (+3) - {ENT}
 	// skip ENT version    (+1) - {uint8}
 	// skip tuple version  (+1) - {uint8}
 	// skip hash code      (+4) - {uint32}
@@ -93,11 +180,11 @@ type TupleHeader struct {
 func (t *TupleHeader) Size() int {
 
 	// data size width is the same as the field size
-	size := 14 + int(t.FieldSize)*int(t.FieldCount) + int(t.FieldSize)
+	size := 11 + int(t.FieldSize)*int(t.FieldCount) + int(t.FieldSize)
 	return size
 }
 
-func (t *TupleHeader) Encode(dst []byte) (int, error) {
+func (t *TupleHeader) Write(dst []byte) (int, error) {
 
 	if len(dst) < t.Size() {
 		return 0, xbinary.ErrOutOfRange
@@ -105,14 +192,14 @@ func (t *TupleHeader) Encode(dst []byte) (int, error) {
 		return 0, errors.New("Invalid Header: Field count does not equal number of field offsets")
 	}
 
-	copy([]byte("ENT"), dst)
-	dst[3] = byte(t.ProtocolVersion)
-	dst[4] = byte(t.TupleVersion)
-	binary.LittleEndian.PutUint32(dst[5:], t.Hash)
-	binary.LittleEndian.PutUint32(dst[9:], t.FieldCount)
-	dst[13] = byte(t.FieldSize)
+	// copy([]byte("ENT"), dst)
+	dst[0] = byte(t.ProtocolVersion)
+	dst[1] = byte(t.TupleVersion)
+	binary.LittleEndian.PutUint32(dst[2:], t.Hash)
+	binary.LittleEndian.PutUint32(dst[6:], t.FieldCount)
+	dst[10] = byte(t.FieldSize)
 
-	pos := 14
+	pos := 11
 	switch t.FieldSize {
 	case 1:
 		for _, offset := range t.Offsets {
@@ -154,14 +241,14 @@ func (t *Tuple) Is(tupleType TupleType) bool {
 	return t.Header.Hash == tupleType.Hash
 }
 
-func (t *Tuple) Encode(data []byte) (int, error) {
+func (t *Tuple) Write(data []byte) (int, error) {
 	if (t.Size() + t.Header.Size()) > len(data) {
 		return 0, xbinary.ErrOutOfRange
 	}
 
 	// write header
 	var wrote int
-	if wrote, err := t.Header.Encode(data); err != nil {
+	if wrote, err := t.Header.Write(data); err != nil {
 		return wrote, nil
 	}
 
