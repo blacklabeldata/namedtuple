@@ -94,7 +94,7 @@ func TestBuilderTypeCheck(t *testing.T) {
 	assert.NotNil(t, builder.typeCheck("school", StringField))
 
 	// testing invalid type
-	assert.NotNil(t, builder.typeCheck("uuid", DateField))
+	assert.NotNil(t, builder.typeCheck("uuid", TimestampField))
 }
 
 // String
