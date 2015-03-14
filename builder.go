@@ -54,58 +54,6 @@ func (t *TupleBuilder) typeCheck(fieldName string, fieldType FieldType) error {
 	return nil
 }
 
-func (b *TupleBuilder) PutFloat32(field string, value float32) (wrote int, err error) {
-
-	// field type should be
-	if err = b.typeCheck(field, Float32Field); err != nil {
-		return 0, err
-	}
-
-	// write value
-	// length check performed by xbinary
-	wrote, err = xbinary.LittleEndian.PutFloat32(b.buffer, b.pos+1, value)
-	if err != nil {
-		return 0, err
-	}
-
-	// write type code
-	b.buffer[b.pos] = byte(FloatCode.OpCode)
-
-	// set field offset
-	b.offsets[field] = b.pos
-
-	// incr pos
-	b.pos += 5
-
-	return 5, nil
-}
-
-func (b *TupleBuilder) PutFloat64(field string, value float64) (wrote int, err error) {
-
-	// field type should be
-	if err = b.typeCheck(field, Float64Field); err != nil {
-		return 0, err
-	}
-
-	// write value
-	// length check performed by xbinary
-	wrote, err = xbinary.LittleEndian.PutFloat64(b.buffer, b.pos+1, value)
-	if err != nil {
-		return 1, err
-	}
-
-	// write type code
-	b.buffer[b.pos] = byte(DoubleCode.OpCode)
-
-	// set field offset
-	b.offsets[field] = b.pos
-
-	// incr pos
-	b.pos += 9
-
-	return 9, nil
-}
-
 func (b *TupleBuilder) PutTimestamp(field string, value time.Time) (wrote int, err error) {
 
 	// field type should be

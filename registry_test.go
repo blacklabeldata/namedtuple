@@ -2,8 +2,9 @@ package namedtuple
 
 import (
 	// "fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 	// "time"
 )
 
@@ -14,10 +15,15 @@ func createTestTupleType() TupleType {
 	age := Field{"age", false, Uint8Field}
 	location := Field{"location", false, TupleField}
 
+	lat := Field{"lat", false, Float32Field}
+	lon := Field{"lon", false, Float32Field}
+	alt := Field{"alt", false, Float64Field}
+
 	// create tuple type
 	User := New("user")
 	User.AddVersion(uuid, username, age)
 	User.AddVersion(location)
+	User.AddVersion(lat, lon, alt)
 	return User
 }
 
