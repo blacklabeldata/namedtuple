@@ -11,7 +11,7 @@ import (
 func TestPutStringFail_1(t *testing.T) {
 	// create test type
 	// float test type
-	TestType := New("string")
+	TestType := New("testing", "string")
 	TestType.AddVersion(
 		Field{"string", true, StringField},
 		Field{"bool", true, BooleanField},
@@ -35,7 +35,7 @@ func TestPutStringFail_1(t *testing.T) {
 func TestPutStringPass_1(t *testing.T) {
 	// create test type
 	// float test type
-	TestType := New("string")
+	TestType := New("testing", "string")
 	TestType.AddVersion(
 		Field{"string", true, StringField},
 		Field{"bool", true, BooleanField},
@@ -63,7 +63,7 @@ func TestPutStringPass_1(t *testing.T) {
 func TestPutStringFail_2(t *testing.T) {
 	// create test type
 	// float test type
-	TestType := New("string")
+	TestType := New("testing", "string")
 	TestType.AddVersion(
 		Field{"string", true, StringField},
 		Field{"bool", true, BooleanField},
@@ -91,7 +91,7 @@ func TestPutStringFail_2(t *testing.T) {
 func TestPutStringPass_2(t *testing.T) {
 	// create test type
 	// float test type
-	TestType := New("string")
+	TestType := New("testing", "string")
 	TestType.AddVersion(
 		Field{"string", true, StringField},
 		Field{"bool", true, BooleanField},
@@ -123,7 +123,7 @@ func TestPutStringPass_2(t *testing.T) {
 func TestPutStringFail_3(t *testing.T) {
 	// create test type
 	// float test type
-	TestType := New("string")
+	TestType := New("testing", "string")
 	TestType.AddVersion(
 		Field{"string", true, StringField},
 		Field{"bool", true, BooleanField},
@@ -151,7 +151,7 @@ func TestPutStringFail_3(t *testing.T) {
 func TestPutStringPass_3(t *testing.T) {
 	// create test type
 	// float test type
-	TestType := New("string")
+	TestType := New("testing", "string")
 	TestType.AddVersion(
 		Field{"string", true, StringField},
 		Field{"bool", true, BooleanField},

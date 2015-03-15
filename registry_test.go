@@ -20,7 +20,7 @@ func createTestTupleType() TupleType {
 	alt := Field{"alt", false, Float64Field}
 
 	// create tuple type
-	User := New("user")
+	User := New("testing", "user")
 	User.AddVersion(uuid, username, age)
 	User.AddVersion(location)
 	User.AddVersion(lat, lon, alt)

@@ -51,7 +51,7 @@ func TestBuilderPutInt8Fail(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("int8")
+	TestType := New("testing", "int8")
 	TestType.AddVersion(
 		Field{"int8", true, Int8Field},
 		Field{"uint8", true, Uint8Field},
@@ -76,7 +76,7 @@ func TestBuilderPutInt8Fail(t *testing.T) {
 func TestBuilderPutInt8Pass(t *testing.T) {
 	// create test type
 	// integer test type
-	TestType := New("int8")
+	TestType := New("testing", "int8")
 	TestType.AddVersion(
 		Field{"int8", true, Int8Field},
 		Field{"uint8", true, Uint8Field},
@@ -103,7 +103,7 @@ func TestBuilderPutUint16Fail_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint16")
+	TestType := New("testing", "uint16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -129,7 +129,7 @@ func TestBuilderPutUint16Pass_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint16")
+	TestType := New("testing", "uint16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -156,7 +156,7 @@ func TestBuilderPutUint16Fail_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint16")
+	TestType := New("testing", "uint16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -176,7 +176,7 @@ func TestBuilderPutUint16Pass_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint16")
+	TestType := New("testing", "uint16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -206,7 +206,7 @@ func TestBuilderPutInt16Fail_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("int16")
+	TestType := New("testing", "int16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -232,7 +232,7 @@ func TestBuilderPutInt16Pass_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("int16")
+	TestType := New("testing", "int16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -259,7 +259,7 @@ func TestBuilderPutInt16Fail_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("int16")
+	TestType := New("testing", "int16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -279,7 +279,7 @@ func TestBuilderPutInt16Pass_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("int16")
+	TestType := New("testing", "int16")
 	TestType.AddVersion(
 		Field{"int16", true, Int16Field},
 		Field{"uint16", true, Uint16Field},
@@ -309,7 +309,7 @@ func TestBuilderPutUint32Fail_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -335,7 +335,7 @@ func TestBuilderPutUint32Pass_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -362,7 +362,7 @@ func TestBuilderPutUint32Fail_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -382,7 +382,7 @@ func TestBuilderPutUint32Pass_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -411,7 +411,7 @@ func TestBuilderPutUint32Fail_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -431,7 +431,7 @@ func TestBuilderPutUint32Pass_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -461,7 +461,7 @@ func TestBuilderPutInt32Fail_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -487,7 +487,7 @@ func TestBuilderPutInt32Pass_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -514,7 +514,7 @@ func TestBuilderPutInt32Fail_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -534,7 +534,7 @@ func TestBuilderPutInt32Pass_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -563,7 +563,7 @@ func TestBuilderPutInt32Fail_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -583,7 +583,7 @@ func TestBuilderPutInt32Pass_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint32")
+	TestType := New("testing", "uint32")
 	TestType.AddVersion(
 		Field{"int32", true, Int32Field},
 		Field{"uint32", true, Uint32Field},
@@ -613,7 +613,7 @@ func TestBuilderPutUint64Fail_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -639,7 +639,7 @@ func TestBuilderPutUint64Pass_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -666,7 +666,7 @@ func TestBuilderPutUint64Fail_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -686,7 +686,7 @@ func TestBuilderPutUint64Pass_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -715,7 +715,7 @@ func TestBuilderPutUint64Fail_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -735,7 +735,7 @@ func TestBuilderPutUint64Pass_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -764,7 +764,7 @@ func TestBuilderPutUint64Fail_4(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -784,7 +784,7 @@ func TestBuilderPutUint64Pass_4(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -814,7 +814,7 @@ func TestBuilderPutInt64Fail_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -840,7 +840,7 @@ func TestBuilderPutInt64Pass_1(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -867,7 +867,7 @@ func TestBuilderPutInt64Fail_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -887,7 +887,7 @@ func TestBuilderPutInt64Pass_2(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -916,7 +916,7 @@ func TestBuilderPutInt64Fail_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -936,7 +936,7 @@ func TestBuilderPutInt64Pass_3(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -965,7 +965,7 @@ func TestBuilderPutInt64Fail_4(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},
@@ -985,7 +985,7 @@ func TestBuilderPutInt64Pass_4(t *testing.T) {
 
 	// create test type
 	// integer test type
-	TestType := New("uint64")
+	TestType := New("testing", "uint64")
 	TestType.AddVersion(
 		Field{"int64", true, Int64Field},
 		Field{"uint64", true, Uint64Field},

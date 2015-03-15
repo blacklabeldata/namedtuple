@@ -13,7 +13,7 @@ func TestPutTimestampFail(t *testing.T) {
 
 	// create test type
 	// float test type
-	TestType := New("time")
+	TestType := New("testing", "time")
 	TestType.AddVersion(
 		Field{"timestamp", true, TimestampField},
 		Field{"float64", true, Float64Field},
@@ -38,7 +38,7 @@ func TestPutTimestampPass(t *testing.T) {
 
 	// create test type
 	// float test type
-	TestType := New("time")
+	TestType := New("testing", "time")
 	TestType.AddVersion(
 		Field{"timestamp", true, TimestampField},
 		Field{"float64", true, Float64Field},

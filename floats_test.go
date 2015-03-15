@@ -12,7 +12,7 @@ func TestPutFloat32Fail(t *testing.T) {
 
 	// create test type
 	// float test type
-	TestType := New("float")
+	TestType := New("testing", "float")
 	TestType.AddVersion(
 		Field{"float32", true, Float32Field},
 		Field{"float64", true, Float64Field},
@@ -38,7 +38,7 @@ func TestPutFloat32Pass(t *testing.T) {
 
 	// create test type
 	// float test type
-	TestType := New("float")
+	TestType := New("testing", "float")
 	TestType.AddVersion(
 		Field{"float32", true, Float32Field},
 		Field{"float64", true, Float64Field},
@@ -68,7 +68,7 @@ func TestPutFloat64Fail(t *testing.T) {
 
 	// create test type
 	// float test type
-	TestType := New("float")
+	TestType := New("testing", "float")
 	TestType.AddVersion(
 		Field{"float32", true, Float32Field},
 		Field{"float64", true, Float64Field},
@@ -94,7 +94,7 @@ func TestPutFloat64Pass(t *testing.T) {
 
 	// create test type
 	// float test type
-	TestType := New("float")
+	TestType := New("testing", "float")
 	TestType.AddVersion(
 		Field{"float32", true, Float32Field},
 		Field{"float64", true, Float64Field},
