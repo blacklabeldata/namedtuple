@@ -2,8 +2,13 @@ package schema
 
 import (
 	// "fmt"
-	"github.com/stretchr/testify/assert"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 	// "time"
 )
 
@@ -70,7 +75,7 @@ func TestLoop(t *testing.T) {
     // this is a comment
     // This is also a comment
     // This is one too
-    message user {
+    type user {
         // version comment
         version 1 {
             required uuid = string
@@ -86,7 +91,7 @@ func TestLoop(t *testing.T) {
 
 	var token Token
 	l := NewLexer("tuple", text, func(t Token) {
-		// fmt.Println("handler: ", t.Type, t)
+		fmt.Println("handler: ", t.Type, t)
 		token = t
 	})
 	// lexText(l)
@@ -94,6 +99,21 @@ func TestLoop(t *testing.T) {
 	// var start = time.Now()
 	go l.run()
 	// fmt.Println(time.Now().Sub(start).Seconds())
+}
+
+func TestComplexFile(t *testing.T) {
+	// filename, err := filepath.Abs("./examples/complex.ent")
+	file, err := os.Open("./examples/complex.ent") // For read access.
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytes, err := ioutil.ReadAll(file)
+	text := string(bytes)
+
+	l := NewLexer("complex file", text, func(t Token) {
+		fmt.Printf("%#v\n", t)
+	})
+	go l.run()
 }
 
 // func TestLoop2(t *testing.T) {
