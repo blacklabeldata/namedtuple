@@ -1,6 +1,6 @@
-package users
+namespace users
 
-import "./projects"
+import projects
 
 // Location type
 type Location {

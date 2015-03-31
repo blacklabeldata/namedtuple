@@ -15,11 +15,12 @@ var syncHash SynchronizedHash = NewHasher(fnv.New32a())
 var NIL Tuple = Tuple{}
 
 type TupleType struct {
-	Namspace string // Tuple Namespace
-	Name     string // Tuple Name
-	Hash     uint32
-	versions [][]Field
-	fields   map[string]int
+	Namspace     string // Tuple Namespace
+	Name         string // Tuple Name
+	NamspaceHash uint32
+	Hash         uint32
+	versions     [][]Field
+	fields       map[string]int
 }
 
 type Version struct {
@@ -98,7 +99,8 @@ func (b *TupleBuilder) Build() (Tuple, error) {
 
 func New(namespace string, name string) (t TupleType) {
 	hash := syncHash.Hash([]byte(name))
-	t = TupleType{namespace, name, hash, make([][]Field, 0), make(map[string]int)}
+	ns_hash := syncHash.Hash([]byte(namespace))
+	t = TupleType{namespace, name, ns_hash, hash, make([][]Field, 0), make(map[string]int)}
 	return
 }
 
@@ -214,6 +216,7 @@ func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
 	return TupleHeader{
 		ProtocolVersion: 0,
 		TupleVersion:    tupleVersion,
+		NamespaceHash:   b.tupleType.NamspaceHash,
 		Hash:            b.tupleType.Hash,
 		FieldCount:      totalFieldCount,
 		FieldSize:       fieldSize,
@@ -224,16 +227,17 @@ func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
 }
 
 type TupleHeader struct {
-	// skip protocol version  (+1) - {uint8}
-	// skip tuple version     (+1) - {uint8}
-	// skip namespace hash    (+4) - {uint32}
-	// skip hash code         (+4) - {uint32}
-	// skip field count       (+4) - {uint32}
-	// skip field size        (+1) - {1,2,4,8} bytes
+	// protocol version  (+1) - {uint8}
+	// tuple version     (+1) - {uint8}
+	// namespace hash    (+4) - {uint32}
+	// hash code         (+4) - {uint32}
+	// field count       (+4) - {uint32}
+	// field size        (+1) - {1,2,4,8} bytes
 	//  - fields -            (field count * field size)
-	// skip data length       (+8) - {depends on field size (ie. same as field size)}
+	// data length       (+8) - {depends on field size (ie. same as field size)}
 	ProtocolVersion uint8
 	TupleVersion    uint8
+	NamespaceHash   uint32
 	Hash            uint32
 	FieldCount      uint32
 	FieldSize       uint8
@@ -260,11 +264,12 @@ func (t *TupleHeader) Write(dst []byte) (int, error) {
 	// copy([]byte("ENT"), dst)
 	dst[0] = byte(t.ProtocolVersion)
 	dst[1] = byte(t.TupleVersion)
-	binary.LittleEndian.PutUint32(dst[2:], t.Hash)
-	binary.LittleEndian.PutUint32(dst[6:], t.FieldCount)
-	dst[10] = byte(t.FieldSize)
+	binary.LittleEndian.PutUint32(dst[2:], t.NamespaceHash)
+	binary.LittleEndian.PutUint32(dst[6:], t.Hash)
+	binary.LittleEndian.PutUint32(dst[10:], t.FieldCount)
+	dst[14] = byte(t.FieldSize)
 
-	pos := 11
+	pos := 15
 	switch t.FieldSize {
 	case 1:
 		for _, offset := range t.Offsets {
