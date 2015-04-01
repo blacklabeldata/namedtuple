@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 )
 
-// Token Type enum
+// TokenType enum
 type TokenType uint8
 
 // Lex items
@@ -38,7 +38,7 @@ const (
 	equals     = "="
 	comment    = "//"
 	dollarRef  = "$"
-	message    = "message"
+	message    = "type"
 	version    = "version"
 	required   = "required"
 	optional   = "optional"
@@ -52,7 +52,7 @@ var TypeNames = []string{"string",
 	"uint16", "int16",
 	"uint32", "int32",
 	"uint64", "int64",
-	"float32", "float64", "date",
+	"float32", "float64", "timestamp",
 	"tuple", "any",
 }
 
@@ -76,7 +76,7 @@ func (t Token) String() string {
 	return fmt.Sprintf("%q", t.Value)
 }
 
-// Token handler function
+// Handler is simpley a function which takes a single Token argument
 type Handler func(Token)
 
 // stateFn represents the state of the scanner
@@ -397,9 +397,9 @@ func lexType(l *Lexer) stateFn {
 			l.Pos += len(closeArray)
 			l.emit(TokenCloseArrayBracket)
 			return lexField
-		} else {
-			return l.errorf("expected ]")
 		}
+		return l.errorf("expected ]")
+
 	} else if strings.HasPrefix(l.remaining(), dollarRef) {
 		l.emit(TokenReference)
 		for {

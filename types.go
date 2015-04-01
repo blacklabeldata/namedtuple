@@ -29,8 +29,6 @@ const (
 	TupleArrayField
 	StringField
 	StringArrayField
-	DateField
-	DateArrayField
 	BooleanField
 )
 

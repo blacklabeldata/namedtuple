@@ -6,6 +6,13 @@ test:
 	@echo "------------------"
 	@go test -coverprofile=coverage.out
 
+benchmark:
+	@echo "------------------"
+	@echo " benchmark"
+	@echo "------------------"
+	@go test -test.bench="^Bench*"
+
+
 html:
 	@echo "------------------"
 	@echo " html report"

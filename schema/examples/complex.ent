@@ -1,0 +1,34 @@
+namespace users
+
+import projects
+
+// Location type
+type Location {
+
+  // Coordinates
+  version 1 {
+    required latitude = float64
+    required longitude = float64
+    required altitude = float64
+  }
+}
+
+// User object
+type User {
+
+  // base user
+  version 1 {
+    required uuid = string
+    required username = string
+    optional age = uint8
+  }
+
+  // 11//15/14
+  version 2 {
+      optional location = $Location
+  }
+
+  version 3 {
+    optional friends = [$User]
+  }
+}
