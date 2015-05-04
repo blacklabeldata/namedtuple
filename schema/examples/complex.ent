@@ -7,9 +7,7 @@ type Location {
 
   // Coordinates
   version 1 {
-    required latitude = float64
-    required longitude = float64
-    required altitude = float64
+    required float64 latitude, longitude, altitude
   }
 }
 
@@ -18,14 +16,13 @@ type User {
 
   // base user
   version 1 {
-    required uuid = string
-    required username = string
-    optional age = uint8
+    required string uuid, username
+    optional uint8 age
   }
 
-  // 11//15/14
+  // 11/15/14
   version 2 {
-      optional location = $Location
+      optional Location location
   }
 
   version 3 {
