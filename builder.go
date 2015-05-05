@@ -6,7 +6,7 @@ import (
 	"hash/fnv"
 	"math"
 
-	"github.com/eliquious/xbinary"
+	"github.com/swiftkick-io/xbinary"
 )
 
 var syncHash SynchronizedHash = NewHasher(fnv.New32a())

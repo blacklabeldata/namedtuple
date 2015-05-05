@@ -1,6 +1,6 @@
 package namedtuple
 
-import "github.com/eliquious/xbinary"
+import "github.com/swiftkick-io/xbinary"
 
 // PutFloat32 writes a 32-bit float for the given string field. The field type must be `Float32Field`, otherwise an error is returned. The type code is written first then the value. Upon success, the number of bytes written is returned along with a nil error.
 func (b *TupleBuilder) PutFloat32(field string, value float32) (wrote int, err error) {

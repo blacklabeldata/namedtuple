@@ -3,7 +3,7 @@ package namedtuple
 import (
 	"math"
 
-	"github.com/eliquious/xbinary"
+	"github.com/swiftkick-io/xbinary"
 )
 
 // PutFloat32Array writes a float array for the given field. The field type must be a 'Float32ArrayField', otherwise as error will be returned. The type code is written first followed by the array size in bytes. If the size of the array is less than `math.MaxUint8`, a byte will be used to represent the length. If the size of the array is less than `math.MaxUint16`, a 16-bit unsigned integer will be used to represent the length and so on. If the buffer is too small to store the entire array, an `xbinary.ErrOutOfRange` error will be returned. If the write is successful, the total number of bytes will be returned as well as a nil error.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/eliquious/xbinary"
+	"github.com/swiftkick-io/xbinary"
 )
 
 // PutTuple writes a tuple into the given field. The field type must be a TupleField, otherwise an error will be returned. The type code is written first, then the length, then the value. If the tuple length is less than `math.MaxUint8`, a single byte is used to represent the length. If the tuple length is less than `math.MaxUint16`, an unsigned 16-bit integer is used to represent the length and so on as the length increases. If the buffer is not large enough to store the entire tuple an `xbinary.ErrOutOfRange` error is returned. If the write is successful, the number of bytes written is returned as well as a nil error.
