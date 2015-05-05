@@ -26,6 +26,6 @@ type User {
   }
 
   version 3 {
-    optional friends = [$User]
+    optional []User friends
   }
 }
