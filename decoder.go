@@ -3,7 +3,7 @@ package namedtuple
 import (
 	"encoding/binary"
 	"errors"
-	// "github.com/eliquious/xbinary"
+	// "github.com/swiftkick-io/xbinary"
 )
 
 // skip magic num      (+3) - {ENT}

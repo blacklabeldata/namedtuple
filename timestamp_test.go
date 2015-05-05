@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eliquious/xbinary"
 	"github.com/stretchr/testify/assert"
+	"github.com/swiftkick-io/xbinary"
 )
 
 // time testing

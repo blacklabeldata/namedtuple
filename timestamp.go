@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/eliquious/xbinary"
+	"github.com/swiftkick-io/xbinary"
 )
 
 // PutTimestamp writes a 64-bit signed integer (using `time.UnixNano()`) for the given `time.Time` value. The string field type must be a `TimestampField`. If the buffer does not have enough space available an error is returned. Upon successful write, the number of bytes written will be returned as well as a nil error.

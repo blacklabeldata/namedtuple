@@ -3,7 +3,7 @@ package namedtuple
 import (
 	"math"
 
-	"github.com/eliquious/xbinary"
+	"github.com/swiftkick-io/xbinary"
 )
 
 func (b *TupleBuilder) PutUint8Array(field string, value []uint8) (wrote int, err error) {

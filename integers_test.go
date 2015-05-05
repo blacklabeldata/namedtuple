@@ -3,8 +3,8 @@ package namedtuple
 import (
 	"testing"
 
-	"github.com/eliquious/xbinary"
 	"github.com/stretchr/testify/assert"
+	"github.com/swiftkick-io/xbinary"
 )
 
 func TestBuilderPutUint8Fail(t *testing.T) {

@@ -3,7 +3,7 @@ package namedtuple
 import (
 	"math"
 
-	"github.com/eliquious/xbinary"
+	"github.com/swiftkick-io/xbinary"
 )
 
 // PutUint8 sets an 8-bit unsigned value for the given string name. The field name must be a Uint8Field otherwise an error will be returned. If the type buffer no longer has enough space to write this value an xbinary.ErrOutOfRange error will be returned. Upon success 2 bytes should be written into the buffer and the returned error should be nil. The type code is written first then the byte value.
