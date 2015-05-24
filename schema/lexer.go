@@ -3,6 +3,7 @@ package schema
 import (
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -14,7 +15,7 @@ const (
 	TokenError             TokenType = iota // 0 Lexer Error
 	TokenEOF                                // 1 End of File
 	TokenComment                            // 2 Comment
-	TokenMessage                            // 3 Message keyword
+	TokenTypeDef                            // 3 Type keyword
 	TokenVersion                            // 4 Version keyword
 	TokenValueType                          // 5 Value type ID (string, uint8)
 	TokenRequired                           // 6 Required Keyword
@@ -27,6 +28,14 @@ const (
 	TokenEquals                             // 13 Equals sign
 	TokenIdentifier                         // 14 Message or Field Name
 	TokenReference                          // 15 Message type reference
+	TokenComma                              // 16 Comma
+	TokenPeriod                             // 17 Period
+	TokenNamespace                          // 18 Namespace keyword
+	TokenImport                             // 19 Import keyword
+	TokenFrom                               // 20 From keyword
+	TokenAs                                 // 21 As keyword
+	TokenPackage                            // 22 Package keyword
+	TokenPackageName                        // 23 Package name
 )
 
 // Constant Punctuation and Keywords
@@ -38,16 +47,23 @@ const (
 	equals     = "="
 	comment    = "//"
 	dollarRef  = "$"
-	message    = "type"
+	typeDef    = "type"
 	version    = "version"
 	required   = "required"
 	optional   = "optional"
+	period     = "."
+	comma      = ","
+	from       = "from"
+	imp        = "import"
+	as         = "as"
+	pkg        = "package"
 )
 
+// eof represents the end of file/input
 const eof = -1
 
-// Types
-var TypeNames = []string{"string",
+// Reserved Types
+var TypeNames = []string{"string", "byte",
 	"uint8", "int8",
 	"uint16", "int16",
 	"uint32", "int32",
@@ -117,6 +133,12 @@ func (l *Lexer) run() {
 
 // emit passes an item pack to the client
 func (l *Lexer) emit(t TokenType) {
+
+	// if the position is the same as the start, do not emit a token
+	if l.Pos == l.Start {
+		return
+	}
+
 	tok := Token{t, l.input[l.Start:l.Pos]}
 	// fmt.Println("token: ", tok)
 	l.handler(tok)
@@ -124,22 +146,32 @@ func (l *Lexer) emit(t TokenType) {
 	l.Start = l.Pos
 }
 
+// remaining returns the input from the current position until the end
 func (l *Lexer) remaining() string {
 	return l.input[l.Pos:]
 }
 
+// advance increases the current position by the given amount
+func (l *Lexer) advance(incr int) {
+	l.Pos += incr
+	return
+}
+
+// skipWhitespace ignores all whitespace characters
 func (l *Lexer) skipWhitespace() {
 	l.acceptRun(" \t\r\n")
 	l.ignore()
 }
 
+// next advances the lexer position and returns the next rune. If the input
+// does not have any more runes, an `eof` is returned.
 func (l *Lexer) next() (r rune) {
 	if l.Pos >= len(l.input) {
 		l.Width = 0
 		return eof
 	}
 	r, l.Width = utf8.DecodeRuneInString(l.remaining())
-	l.Pos += l.Width
+	l.advance(l.Width)
 	return
 }
 
@@ -160,20 +192,7 @@ func (l *Lexer) peek() (r rune) {
 	return
 }
 
-// func (l *Lexer) NextToken() Token {
-// 	for {
-// 		select {
-// 		case item := <-l.tokens:
-// 			return item
-// 		default:
-// 			l.state = l.state(l)
-// 		}
-// 	}
-// 	panic("not reached")
-// }
-
-// accept consumes the next rune
-// if it's in the valid set
+// accept consumes the next rune if it's in the valid set
 func (l *Lexer) accept(valid string) bool {
 	if strings.IndexRune(valid, l.next()) >= 0 {
 		return true
@@ -205,15 +224,29 @@ OUTER:
 		l.skipWhitespace()
 
 		if strings.HasPrefix(l.remaining(), comment) { // Start comment
-			return lexComment // state function which lexes a comment
-		} else if strings.HasPrefix(l.remaining(), message) { // Start message
-			return lexMessage // state function which lexes a message
+			// state function which lexes a comment
+			return lexComment
+		} else if strings.HasPrefix(l.remaining(), pkg) { // Start package decl
+			// state function which lexes a package decl
+			return lexPackage
+		} else if strings.HasPrefix(l.remaining(), from) { // Start from decl
+			// state function which lexes a from decl
+			return lexFrom
+		} else if strings.HasPrefix(l.remaining(), imp) { // Start import decl
+			// state function which lexes a imp decl
+			return lexImport
+		} else if strings.HasPrefix(l.remaining(), typeDef) { // Start type def
+			// state function which lexes a type
+			return lexMessage
 		} else if strings.HasPrefix(l.remaining(), version) { // Start version
-			return lexVersion // state function which lexes a version
+			// state function which lexes a version
+			return lexVersion
 		} else if strings.HasPrefix(l.remaining(), required) { // Start required field
-			return lexField // state function which lexes a field
+			// state function which lexes a field
+			return lexField
 		} else if strings.HasPrefix(l.remaining(), optional) { // Start optional field
-			return lexField // state function which lexes a field
+			// state function which lexes a field
+			return lexField
 		} else if strings.HasPrefix(l.remaining(), closeScope) { // Close scope
 			l.Pos += len(closeScope)
 			l.emit(TokenCloseCurlyBracket)
@@ -224,7 +257,7 @@ OUTER:
 				l.emit(TokenEOF)
 				break OUTER
 			default:
-				l.errorf("unknown token")
+				l.errorf("unknown token: ", string(r))
 			}
 		}
 	}
@@ -263,13 +296,121 @@ func lexComment(l *Lexer) stateFn {
 
 func lexMessage(l *Lexer) stateFn {
 	// skip message keyword
-	l.Pos += len(message)
+	l.Pos += len(typeDef)
 
 	// emit keyword
-	l.emit(TokenMessage)
+	l.emit(TokenTypeDef)
 	l.skipWhitespace()
 
 	return lexIdentifier
+}
+
+func lexPackage(l *Lexer) stateFn {
+	// skip package keyword
+	l.Pos += len(pkg)
+
+	// emit package token
+	l.emit(TokenPackage)
+
+	// skip whitespace
+	l.skipWhitespace()
+
+	// lex package name
+	return lexPackageName
+}
+
+func lexPackageName(l *Lexer) stateFn {
+
+	// lex package name
+	var lastPeriod bool
+OUTER:
+	for {
+
+		switch r := l.next(); {
+		case unicode.IsLetter(r):
+			lastPeriod = false
+		case r == '.' || r == '_':
+			lastPeriod = true
+		case unicode.Is(unicode.White_Space, r):
+			l.backup()
+			break OUTER
+		default:
+			l.backup()
+			lastPeriod = false
+			return l.errorf("expected newline after package name")
+		}
+	}
+
+	if lastPeriod {
+		return l.errorf("package names cannot end with a period or underscore")
+	}
+
+	// emit package name
+	l.emit(TokenPackageName)
+
+	return lexText
+}
+
+func lexFrom(l *Lexer) stateFn {
+
+	// skip package keyword
+	l.Pos += len(from)
+
+	// emit from token
+	l.emit(TokenFrom)
+
+	// skip whitespace
+	l.skipWhitespace()
+
+	// lex package name
+	return lexPackageName
+}
+
+func lexImport(l *Lexer) stateFn {
+
+	// skip package keyword
+	l.Pos += len(imp)
+
+	// emit from token
+	l.emit(TokenImport)
+
+	// skip whitespace
+	l.skipWhitespace()
+
+	// lex type name
+	var lastComma bool
+OUTER:
+	for {
+
+		switch r := l.next(); {
+		case unicode.IsLetter(r):
+			lastComma = false
+		case r == ',':
+			lastComma = true
+
+			// emit type name
+			l.emit(TokenIdentifier)
+		case r == '\n':
+			l.backup()
+			break OUTER
+		case unicode.Is(unicode.White_Space, r):
+			l.skipWhitespace()
+		default:
+			l.backup()
+			lastComma = false
+			return l.errorf("expected newline after package name")
+		}
+	}
+
+	if lastComma {
+		return l.errorf("package names cannot end with a comma")
+	}
+
+	// emit last type name
+	l.emit(TokenIdentifier)
+
+	// lex package name
+	return lexText
 }
 
 func lexIdentifier(l *Lexer) stateFn {
