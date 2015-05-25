@@ -319,6 +319,122 @@ func TestCloseScope(t *testing.T) {
     assert.Equal(t, "}", tokens[0].Value)
 }
 
+func TestFieldBasicType(t *testing.T) {
+
+    for _, text := range TypeNames {
+
+        var tokens []Token
+        l := NewLexer("Test: "+text, text+" fieldname", func(t Token) {
+            tokens = append(tokens, t)
+        })
+
+        // lex content
+        lexType(l)
+        // t.Log(tokens)
+
+        // there should be 2 token
+        assert.Equal(t, len(tokens), 2)
+
+        // expecting value type token and validating text
+        assert.Equal(t, TokenValueType, tokens[0].Type)
+        assert.Equal(t, text, tokens[0].Value)
+
+        // expecting identifier token and validating text
+        assert.Equal(t, TokenIdentifier, tokens[1].Type)
+        assert.Equal(t, "fieldname", tokens[1].Value)
+    }
+}
+
+func TestFieldBasicArrayType(t *testing.T) {
+
+    for _, text := range TypeNames {
+
+        var tokens []Token
+        l := NewLexer("Test: "+text, "[]"+text+" fieldname", func(t Token) {
+            tokens = append(tokens, t)
+        })
+
+        // lex content
+        lexType(l)
+        // t.Log(tokens)
+
+        // there should be 4 token
+        assert.Equal(t, len(tokens), 4)
+
+        // expecting openArray token and validating text
+        assert.Equal(t, TokenOpenArrayBracket, tokens[0].Type)
+        assert.Equal(t, "[", tokens[0].Value)
+
+        // expecting closeArray token and validating text
+        assert.Equal(t, TokenCloseArrayBracket, tokens[1].Type)
+        assert.Equal(t, "]", tokens[1].Value)
+
+        // expecting value type token and validating text
+        assert.Equal(t, TokenValueType, tokens[2].Type)
+        assert.Equal(t, text, tokens[2].Value)
+
+        // expecting identifier token and validating text
+        assert.Equal(t, TokenIdentifier, tokens[3].Type)
+        assert.Equal(t, "fieldname", tokens[3].Value)
+    }
+}
+
+func TestRequiredFieldType(t *testing.T) {
+
+    text := `required tuple data`
+    var tokens []Token
+    l := NewLexer("Test: "+text, text, func(t Token) {
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+    // t.Log(tokens)
+
+    // there should be 3 token
+    assert.Equal(t, len(tokens), 3)
+
+    // expecting required token and validating text
+    assert.Equal(t, TokenRequired, tokens[0].Type)
+    assert.Equal(t, "required", tokens[0].Value)
+
+    // expecting value type token and validating text
+    assert.Equal(t, TokenValueType, tokens[1].Type)
+    assert.Equal(t, "tuple", tokens[1].Value)
+
+    // expecting identifier token and validating text
+    assert.Equal(t, TokenIdentifier, tokens[2].Type)
+    assert.Equal(t, "data", tokens[2].Value)
+}
+
+func TestOptionalFieldType(t *testing.T) {
+
+    text := `optional tuple data`
+    var tokens []Token
+    l := NewLexer("Test: "+text, text, func(t Token) {
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+    // t.Log(tokens)
+
+    // there should be 3 token
+    assert.Equal(t, len(tokens), 3)
+
+    // expecting optional token and validating text
+    assert.Equal(t, TokenOptional, tokens[0].Type)
+    assert.Equal(t, "optional", tokens[0].Value)
+
+    // expecting value type token and validating text
+    assert.Equal(t, TokenValueType, tokens[1].Type)
+    assert.Equal(t, "tuple", tokens[1].Value)
+
+    // expecting identifier token and validating text
+    assert.Equal(t, TokenIdentifier, tokens[2].Type)
+    assert.Equal(t, "data", tokens[2].Value)
+}
+
 func TestLoop(t *testing.T) {
     text := `
     // this is a comment

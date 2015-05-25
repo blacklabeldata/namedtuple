@@ -317,6 +317,7 @@ OUTER:
 	for {
 		switch r := l.next(); {
 		case unicode.IsLetter(r):
+		case unicode.IsNumber(r):
 		default:
 			l.backup()
 			break OUTER
@@ -495,13 +496,11 @@ func lexVersion(l *Lexer) stateFn {
 func lexType(l *Lexer) stateFn {
 
 	if l.next() == '[' {
-		l.advance(len(openArray))
 		l.emit(TokenOpenArrayBracket)
 
 		if l.next() != ']' {
 			return l.errorf("expected ]")
 		}
-		l.advance(len(closeArray))
 		l.emit(TokenCloseArrayBracket)
 	} else {
 		l.backup()
