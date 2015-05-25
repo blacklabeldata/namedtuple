@@ -242,10 +242,17 @@ OUTER:
 			return lexVersion
 		} else if strings.HasPrefix(l.remaining(), required) { // Start required field
 			// state function which lexes a field
-			return lexField
+			l.Pos += len(required)
+			l.emit(TokenRequired)
+			l.skipWhitespace()
+
+			return lexType
 		} else if strings.HasPrefix(l.remaining(), optional) { // Start optional field
 			// state function which lexes a field
-			return lexField
+			l.Pos += len(optional)
+			l.emit(TokenOptional)
+			l.skipWhitespace()
+			return lexType
 		} else if strings.HasPrefix(l.remaining(), openScope) { // Open scope
 			l.Pos += len(openScope)
 			l.emit(TokenOpenCurlyBracket)
@@ -487,27 +494,6 @@ func lexVersion(l *Lexer) stateFn {
 	}
 
 	return lexText
-}
-
-func lexField(l *Lexer) stateFn {
-
-	// required field
-	if strings.HasPrefix(l.remaining(), required) {
-		l.Pos += len(required)
-		l.emit(TokenRequired)
-
-		// optional field
-	} else if strings.HasPrefix(l.remaining(), optional) {
-		l.Pos += len(optional)
-		l.emit(TokenOptional)
-	} else {
-		return l.errorf("expected 'required' or 'optional'")
-	}
-
-	// skip whitspace between required/optional and type name
-	l.skipWhitespace()
-
-	return lexType(l)
 }
 
 func lexType(l *Lexer) stateFn {
