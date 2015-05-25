@@ -170,6 +170,155 @@ func TestImportAllParsing(t *testing.T) {
     assert.Equal(t, "*", tokens[3].Value)
 }
 
+func TestTypeDef(t *testing.T) {
+
+    text := `type User {}`
+    var tokens []Token
+    l := NewLexer("TypeDef", text, func(t Token) {
+        // fmt.Println("handler: ", t)
+        // token = t
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+    // t.Log(tokens)
+
+    // there should be 4 tokens
+    assert.Equal(t, len(tokens), 4)
+
+    // expecting type token and validating text
+    assert.Equal(t, TokenTypeDef, tokens[0].Type)
+    assert.Equal(t, "type", tokens[0].Value)
+
+    // expecting identifier token and validating text
+    assert.Equal(t, TokenIdentifier, tokens[1].Type)
+    assert.Equal(t, "User", tokens[1].Value)
+
+    // expecting openScope token and validating text
+    assert.Equal(t, TokenOpenCurlyBracket, tokens[2].Type)
+    assert.Equal(t, "{", tokens[2].Value)
+
+    // expecting closeScope token and validating text
+    assert.Equal(t, TokenCloseCurlyBracket, tokens[3].Type)
+    assert.Equal(t, "}", tokens[3].Value)
+}
+
+func TestIdentifier(t *testing.T) {
+
+    text := `User.`
+    var tokens []Token
+    l := NewLexer("TestIdentifier", text, func(t Token) {
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    lexIdentifier(l, nil, false)
+    // t.Log(tokens)
+
+    // there should be 1 token
+    assert.Equal(t, len(tokens), 1)
+
+    // expecting identifier token and validating text
+    assert.Equal(t, TokenIdentifier, tokens[0].Type)
+    assert.Equal(t, "User", tokens[0].Value)
+}
+
+func TestVersion(t *testing.T) {
+
+    text := `version 1`
+    var tokens []Token
+    l := NewLexer("TestVersion", text, func(t Token) {
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    lexVersion(l)
+    // t.Log(tokens)
+
+    // there should be 2 tokens
+    assert.Equal(t, len(tokens), 2)
+
+    // expecting version token and validating text
+    assert.Equal(t, TokenVersion, tokens[0].Type)
+    assert.Equal(t, "version", tokens[0].Value)
+
+    // expecting version number token and validating text
+    assert.Equal(t, TokenVersionNumber, tokens[1].Type)
+    assert.Equal(t, "1", tokens[1].Value)
+}
+
+func TestVersionFail(t *testing.T) {
+
+    text := `version abc`
+    var tokens []Token
+    l := NewLexer("TestVersionFail", text, func(t Token) {
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+    // lexVersion(l)
+    // t.Log(tokens)
+
+    // there should be 4 tokens
+    assert.Equal(t, len(tokens), 4)
+
+    // expecting version token and validating text
+    assert.Equal(t, TokenVersion, tokens[0].Type)
+    assert.Equal(t, "version", tokens[0].Value)
+
+    // expecting error token and validating text
+    assert.Equal(t, TokenError, tokens[1].Type)
+    assert.Equal(t, "TestVersionFail: unknown token: \"a\"", tokens[1].Value)
+
+    // expecting error token and validating text
+    assert.Equal(t, TokenError, tokens[2].Type)
+    assert.Equal(t, "TestVersionFail: unknown token: \"b\"", tokens[2].Value)
+
+    // expecting error token and validating text
+    assert.Equal(t, TokenError, tokens[3].Type)
+    assert.Equal(t, "TestVersionFail: unknown token: \"c\"", tokens[3].Value)
+}
+
+func TestOpenScope(t *testing.T) {
+
+    text := `{`
+    var tokens []Token
+    l := NewLexer("TestOpenScope", text, func(t Token) {
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+
+    // there should be 1 token
+    assert.Equal(t, len(tokens), 1)
+
+    // expecting openScope token and validating text
+    assert.Equal(t, TokenOpenCurlyBracket, tokens[0].Type)
+    assert.Equal(t, "{", tokens[0].Value)
+}
+
+func TestCloseScope(t *testing.T) {
+
+    text := `}`
+    var tokens []Token
+    l := NewLexer("TestCloseScope", text, func(t Token) {
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+
+    // there should be 1 token
+    assert.Equal(t, len(tokens), 1)
+
+    // expecting closeScope token and validating text
+    assert.Equal(t, TokenCloseCurlyBracket, tokens[0].Type)
+    assert.Equal(t, "}", tokens[0].Value)
+}
+
 func TestLoop(t *testing.T) {
     text := `
     // this is a comment

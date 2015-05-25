@@ -246,6 +246,9 @@ OUTER:
 		} else if strings.HasPrefix(l.remaining(), optional) { // Start optional field
 			// state function which lexes a field
 			return lexField
+		} else if strings.HasPrefix(l.remaining(), openScope) { // Open scope
+			l.Pos += len(openScope)
+			l.emit(TokenOpenCurlyBracket)
 		} else if strings.HasPrefix(l.remaining(), closeScope) { // Close scope
 			l.Pos += len(closeScope)
 			l.emit(TokenCloseCurlyBracket)
@@ -256,7 +259,7 @@ OUTER:
 				l.emit(TokenEOF)
 				break OUTER
 			default:
-				l.errorf("unknown token: ", string(r))
+				l.errorf("unknown token: %#v", string(r))
 			}
 		}
 	}
@@ -301,15 +304,13 @@ func lexTypeDef(l *Lexer) stateFn {
 	l.emit(TokenTypeDef)
 	l.skipWhitespace()
 
-	return lexIdentifier(l, lexMessageBody)
+	return lexIdentifier(l, lexText, false)
 }
 
-func lexIdentifier(l *Lexer, next stateFn) stateFn {
-	l.skipWhitespace()
+func lexLetters(l *Lexer, t TokenType) bool {
 
 OUTER:
 	for {
-
 		switch r := l.next(); {
 		case unicode.IsLetter(r):
 		default:
@@ -318,8 +319,31 @@ OUTER:
 		}
 	}
 
-	// emit identifier
-	l.emit(TokenIdentifier)
+	if l.Pos == l.Start {
+		return false
+	}
+
+	// emit token
+	l.emit(t)
+	return true
+}
+
+func lexIdentifier(l *Lexer, next stateFn, allowMultiple bool) stateFn {
+	l.skipWhitespace()
+
+	// look for identifier
+	if !lexLetters(l, TokenIdentifier) {
+		return l.errorf("expected identifier")
+	}
+
+	// check for second identifier
+	if allowMultiple && l.peek() == ',' {
+		l.advance(len(comma))
+		l.emit(TokenComma)
+
+		// lex identifier
+		return lexIdentifier(l, next, allowMultiple)
+	}
 
 	return next
 }
@@ -452,128 +476,73 @@ func lexImport(l *Lexer) stateFn {
 	return lexText
 }
 
-// func lexIdentifier(l *Lexer) stateFn {
-
-//  // find open bracket
-//  if index := strings.IndexAny(l.input[l.Pos:], "{"); index > 0 {
-
-//      // update pos without open bracket
-//      l.Pos += (index - 1)
-
-//      // emit identifier
-//      l.emit(TokenIdentifier)
-
-//      // lex message contents
-//      return lexMessageBody
-//  }
-//  return l.errorf("missing message body")
-// }
-
-func lexMessageBody(l *Lexer) stateFn {
-	l.Pos += len(openScope)
-	l.emit(TokenOpenCurlyBracket)
-	return lexText
-}
-
 func lexVersion(l *Lexer) stateFn {
 	l.Pos += len(version)
 	l.emit(TokenVersion)
 	l.skipWhitespace()
 
 	l.acceptRun("0123456789")
-	l.emit(TokenVersionNumber)
-	l.skipWhitespace()
-
-	if strings.HasPrefix(l.remaining(), openScope) {
-		l.Pos += len(openScope)
-		l.emit(TokenOpenCurlyBracket)
-	} else {
-		return l.errorf("missing version body")
+	if l.Start != l.Pos {
+		l.emit(TokenVersionNumber)
 	}
+
 	return lexText
 }
 
 func lexField(l *Lexer) stateFn {
-	l.skipWhitespace()
 
-	for strings.HasPrefix(l.remaining(), comment) {
-		lexComment(l)
-	}
-
+	// required field
 	if strings.HasPrefix(l.remaining(), required) {
 		l.Pos += len(required)
 		l.emit(TokenRequired)
+
+		// optional field
 	} else if strings.HasPrefix(l.remaining(), optional) {
 		l.Pos += len(optional)
 		l.emit(TokenOptional)
-	} else if strings.HasPrefix(l.remaining(), closeScope) {
-		l.Pos += len(closeScope)
-		l.emit(TokenCloseCurlyBracket)
-		return lexText
 	} else {
 		return l.errorf("expected 'required' or 'optional'")
 	}
 
+	// skip whitspace between required/optional and type name
 	l.skipWhitespace()
 
-	// lexIdentifier(l)
-	for {
-		if strings.HasPrefix(l.remaining(), equals) {
-			l.emit(TokenIdentifier)
-			break
-		} else if l.next() == eof {
-			return l.errorf("expected =")
-		}
-	}
-
-	l.skipWhitespace()
-	if l.accept("=") {
-		l.emit(TokenEquals)
-	} else {
-		return l.errorf("expected '=' sign")
-	}
-	l.skipWhitespace()
-
-	lexType(l)
-	return lexField
+	return lexType(l)
 }
 
 func lexType(l *Lexer) stateFn {
-	// l.skipWhitespace()
+
 	if strings.HasPrefix(l.remaining(), openArray) {
-		l.Pos += len(openArray)
+		l.advance(len(openArray))
 		l.emit(TokenOpenArrayBracket)
 
-		l.skipWhitespace()
-		lexType(l)
-		l.skipWhitespace()
-
-		if strings.HasPrefix(l.remaining(), closeArray) {
-			l.Pos += len(closeArray)
-			l.emit(TokenCloseArrayBracket)
-			return lexField
+		if !strings.HasPrefix(l.remaining(), closeArray) {
+			return l.errorf("expected ]")
 		}
-		return l.errorf("expected ]")
+		l.advance(len(closeArray))
+		l.emit(TokenCloseArrayBracket)
+	}
 
-	} else if strings.HasPrefix(l.remaining(), dollarRef) {
-		l.emit(TokenReference)
-		for {
-			if strings.HasPrefix(l.remaining(), "\n") {
-				l.emit(TokenIdentifier)
-				break
-			} else if l.next() == eof {
-				return l.errorf("expected }")
-			}
-		}
-		return lexField
-	} else {
-		for _, t := range TypeNames {
-			if strings.HasPrefix(l.remaining(), t) {
-				l.Pos += len(t)
-				l.emit(TokenValueType)
-				return lexField
-			}
+	// try built in types
+	var foundType bool
+	for _, t := range TypeNames {
+		if strings.HasPrefix(l.remaining(), t) {
+			l.advance(len(t))
+			l.emit(TokenValueType)
+			foundType = true
+			break
 		}
 	}
-	return l.errorf("expected type name, reference or array type")
+
+	// if it's not a built in type
+	if !foundType {
+
+		// look for type name
+		if !lexLetters(l, TokenValueType) {
+			return l.errorf("expected identifier")
+		}
+	}
+
+	return lexIdentifier(l, lexText, true)
+	// return l.errorf("expected type name, reference or array type")
 }
