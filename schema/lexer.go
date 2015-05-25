@@ -36,6 +36,7 @@ const (
 	TokenAs                                 // 21 As keyword
 	TokenPackage                            // 22 Package keyword
 	TokenPackageName                        // 23 Package name
+	TokenAsterisk                           // 24 Package all
 )
 
 // Constant Punctuation and Keywords
@@ -57,6 +58,7 @@ const (
 	imp        = "import"
 	as         = "as"
 	pkg        = "package"
+	asterisk   = "*"
 )
 
 // eof represents the end of file/input
@@ -212,7 +214,7 @@ func (l *Lexer) acceptRun(valid string) {
 // by passing back a nil pointer that will be the next
 // state thus terminating the lexer
 func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
-	l.handler(Token{TokenError, fmt.Sprintf(format, args...)})
+	l.handler(Token{TokenError, fmt.Sprintf(l.Name+": "+format, args...)})
 	// l.tokens <- Token{TokenError, fmt.Sprintf(format, args...)}
 	return nil
 }
@@ -232,12 +234,9 @@ OUTER:
 		} else if strings.HasPrefix(l.remaining(), from) { // Start from decl
 			// state function which lexes a from decl
 			return lexFrom
-		} else if strings.HasPrefix(l.remaining(), imp) { // Start import decl
-			// state function which lexes a imp decl
-			return lexImport
 		} else if strings.HasPrefix(l.remaining(), typeDef) { // Start type def
 			// state function which lexes a type
-			return lexMessage
+			return lexTypeDef
 		} else if strings.HasPrefix(l.remaining(), version) { // Start version
 			// state function which lexes a version
 			return lexVersion
@@ -294,15 +293,35 @@ func lexComment(l *Lexer) stateFn {
 	return lexText
 }
 
-func lexMessage(l *Lexer) stateFn {
-	// skip message keyword
+func lexTypeDef(l *Lexer) stateFn {
+	// skip type keyword
 	l.Pos += len(typeDef)
 
 	// emit keyword
 	l.emit(TokenTypeDef)
 	l.skipWhitespace()
 
-	return lexIdentifier
+	return lexIdentifier(l, lexMessageBody)
+}
+
+func lexIdentifier(l *Lexer, next stateFn) stateFn {
+	l.skipWhitespace()
+
+OUTER:
+	for {
+
+		switch r := l.next(); {
+		case unicode.IsLetter(r):
+		default:
+			l.backup()
+			break OUTER
+		}
+	}
+
+	// emit identifier
+	l.emit(TokenIdentifier)
+
+	return next
 }
 
 func lexPackage(l *Lexer) stateFn {
@@ -363,10 +382,14 @@ func lexFrom(l *Lexer) stateFn {
 	l.skipWhitespace()
 
 	// lex package name
-	return lexPackageName
+	lexPackageName(l)
+
+	// lex import statement
+	return lexImport
 }
 
 func lexImport(l *Lexer) stateFn {
+	l.skipWhitespace()
 
 	// skip package keyword
 	l.Pos += len(imp)
@@ -377,65 +400,56 @@ func lexImport(l *Lexer) stateFn {
 	// skip whitespace
 	l.skipWhitespace()
 
-	// lex type name
-	var lastComma bool
-OUTER:
-	for {
+	if l.peek() == '*' {
+		l.next()
 
-		switch r := l.next(); {
-		case unicode.IsLetter(r):
-			lastComma = false
-		case r == ',':
-			lastComma = true
+		// package all
+		l.emit(TokenAsterisk)
+	} else {
+		// lex type name
+		var lastComma bool
+	OUTER:
+		for {
 
-			// emit type name
-			l.emit(TokenIdentifier)
-		case r == '\n':
-			l.backup()
-			break OUTER
-		case unicode.Is(unicode.White_Space, r):
-			l.skipWhitespace()
-		default:
-			l.backup()
-			lastComma = false
-			return l.errorf("expected newline after package name")
+			switch r := l.next(); {
+			case unicode.IsLetter(r):
+				lastComma = false
+			case r == ',':
+
+				// backup before comma
+				l.backup()
+
+				// emit type name
+				l.emit(TokenIdentifier)
+
+				// skip comma
+				l.next()
+				l.ignore()
+				lastComma = true
+
+			case r == '\n':
+				l.backup()
+				break OUTER
+			case unicode.Is(unicode.White_Space, r):
+				l.skipWhitespace()
+			default:
+				l.backup()
+				lastComma = false
+				return l.errorf("expected newline after package name")
+			}
 		}
-	}
 
-	if lastComma {
-		return l.errorf("package names cannot end with a comma")
-	}
+		if lastComma {
+			return l.errorf("package names cannot end with a comma")
+		}
 
-	// emit last type name
-	l.emit(TokenIdentifier)
+		// emit last type name
+		l.emit(TokenIdentifier)
+
+	}
 
 	// lex package name
 	return lexText
-}
-
-func lexIdentifier(l *Lexer) stateFn {
-	l.skipWhitespace()
-
-	for {
-
-		if strings.HasPrefix(l.remaining(), openScope) {
-
-			l.emit(TokenIdentifier)
-			return lexMessageBody
-		}
-
-		if l.next() == eof {
-			return l.errorf("expected {")
-		}
-
-		// switch r := l.next(); {
-		// case unicode.IsSpace(r):
-		//  l.ignore()
-		// case unicode.IsLetter(r) || unicode.IsDigit(r):
-		//  insideId = true
-		// case r == '.' || r == '-' || r == '_':
-		// }
-	}
 }
 
 // func lexIdentifier(l *Lexer) stateFn {

@@ -70,6 +70,106 @@ func TestMultiLineComment(t *testing.T) {
     assert.Equal(t, "// This is one too", token.Value)
 }
 
+func TestPackageParsing(t *testing.T) {
+
+    text := `package users`
+    var tokens []Token
+    l := NewLexer("tuple", text, func(t Token) {
+        // fmt.Println("handler: ", t)
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+
+    // there should be 2 tokens
+    assert.Equal(t, len(tokens), 2)
+
+    // expecting package token and validating text
+    assert.Equal(t, TokenPackage, tokens[0].Type)
+    assert.Equal(t, "package", tokens[0].Value)
+
+    // expecting package name token and validating text
+    assert.Equal(t, TokenPackageName, tokens[1].Type)
+    assert.Equal(t, "users", tokens[1].Value)
+}
+
+func TestImportParsing(t *testing.T) {
+
+    text := `from project.users import User, Gadget, Widget`
+    // var token Token
+    var tokens []Token
+    l := NewLexer("tuple", text, func(t Token) {
+        // fmt.Println("handler: ", t)
+        // token = t
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+
+    // there should be 6 tokens
+    assert.Equal(t, len(tokens), 6)
+
+    // expecting from token and validating text
+    assert.Equal(t, TokenFrom, tokens[0].Type)
+    assert.Equal(t, "from", tokens[0].Value)
+
+    // expecting package name token and validating text
+    assert.Equal(t, TokenPackageName, tokens[1].Type)
+    assert.Equal(t, "project.users", tokens[1].Value)
+
+    // expecting import token and validating text
+    assert.Equal(t, TokenImport, tokens[2].Type)
+    assert.Equal(t, "import", tokens[2].Value)
+
+    // expecting identifier token and validating text
+    assert.Equal(t, TokenIdentifier, tokens[3].Type)
+    assert.Equal(t, "User", tokens[3].Value)
+
+    // expecting identifier token and validating text
+    assert.Equal(t, TokenIdentifier, tokens[4].Type)
+    assert.Equal(t, "Gadget", tokens[4].Value)
+
+    // expecting identifier token and validating text
+    assert.Equal(t, TokenIdentifier, tokens[5].Type)
+    assert.Equal(t, "Widget", tokens[5].Value)
+}
+
+func TestImportAllParsing(t *testing.T) {
+
+    text := `from project.users import *`
+    // var token Token
+    var tokens []Token
+    l := NewLexer("tuple", text, func(t Token) {
+        // fmt.Println("handler: ", t)
+        // token = t
+        tokens = append(tokens, t)
+    })
+
+    // lex content
+    l.run()
+
+    // there should be 6 tokens
+    assert.Equal(t, len(tokens), 4)
+
+    // expecting from token and validating text
+    assert.Equal(t, TokenFrom, tokens[0].Type)
+    assert.Equal(t, "from", tokens[0].Value)
+
+    // expecting package name token and validating text
+    assert.Equal(t, TokenPackageName, tokens[1].Type)
+    assert.Equal(t, "project.users", tokens[1].Value)
+
+    // expecting import token and validating text
+    assert.Equal(t, TokenImport, tokens[2].Type)
+    assert.Equal(t, "import", tokens[2].Value)
+
+    // expecting asterisk token and validating text
+    assert.Equal(t, TokenAsterisk, tokens[3].Type)
+    assert.Equal(t, "*", tokens[3].Value)
+}
+
 func TestLoop(t *testing.T) {
     text := `
     // this is a comment
