@@ -2,7 +2,7 @@ package schema
 
 import (
     // "fmt"
-    "fmt"
+
     "io/ioutil"
     "log"
     "os"
@@ -341,7 +341,7 @@ func TestLoop(t *testing.T) {
 
     var token Token
     l := NewLexer("tuple", text, func(t Token) {
-        fmt.Println("handler: ", t.Type, t)
+        // fmt.Println("handler: ", t.Type, t)
         token = t
     })
     // lexText(l)
@@ -361,35 +361,108 @@ func TestComplexFile(t *testing.T) {
     text := string(bytes)
 
     l := NewLexer("complex file", text, func(t Token) {
-        fmt.Printf("%#v\n", t)
+        // fmt.Printf("%#v\n", t)
     })
     l.run()
 }
 
-// func TestLoop2(t *testing.T) {
-//  text := `
-//     // this is a comment
-//     // This is also a comment
-//     // This is one too
-//     message
-//     `
+func BenchmarkLargePackage(b *testing.B) {
 
-//  // var token Token
-//  var tokens = make(chan Token, 2)
-//  l := NewLexer("tuple", text, func(t Token) {
-//      // fmt.Println("handler: ", t)
-//      // token = t
-//      tokens <- t
-//      if t.Type == TokenEOF {
-//          close(tokens)
-//      }
-//  })
-//  // lexText(l)
-//  //
-//  go l.run()
-//  var start = time.Now()
-//  for token := range tokens {
-//      fmt.Println("handler: ", token)
-//  }
-//  fmt.Println(time.Now().Sub(start).Seconds())
-// }
+    text := `package users.package
+
+    from some.package import Something
+
+    // Location type
+    type Location {
+
+      // Coordinates
+      version 1 {
+        required float64 latitude, longitude, altitude
+      }
+    }
+
+    // User object
+    type User {
+
+      // base user
+      version 1 {
+        required string uuid, username
+        optional uint8 age
+      }
+
+      // 11/15/14
+      version 2 {
+          optional Location location
+      }
+
+      version 3 {
+        optional []User friends
+      }
+    }`
+
+    for i := 0; i < b.N; i++ {
+        l := NewLexer("large package", text, func(t Token) {
+        })
+        l.run()
+    }
+}
+
+func BenchmarkLexPackageDecl(b *testing.B) {
+    text := `package users`
+
+    for i := 0; i < b.N; i++ {
+        l := NewLexer("package decl", text, func(t Token) {
+        })
+        l.run()
+    }
+}
+
+func BenchmarkImportStmt(b *testing.B) {
+    text := `from some.package import Something`
+
+    for i := 0; i < b.N; i++ {
+        l := NewLexer("import stmt", text, func(t Token) {
+        })
+        l.run()
+    }
+}
+
+func BenchmarkVersionStmt(b *testing.B) {
+    text := `version 1 {}`
+
+    for i := 0; i < b.N; i++ {
+        l := NewLexer("version stmt", text, func(t Token) {
+        })
+        l.run()
+    }
+}
+
+func BenchmarkArrayFieldStmt(b *testing.B) {
+    text := `required []User friends`
+
+    for i := 0; i < b.N; i++ {
+        l := NewLexer("version stmt", text, func(t Token) {
+        })
+        l.run()
+    }
+}
+
+func BenchmarkFieldStmt(b *testing.B) {
+    text := `required uint8 age`
+
+    for i := 0; i < b.N; i++ {
+        l := NewLexer("version stmt", text, func(t Token) {
+        })
+        l.run()
+    }
+}
+
+func BenchmarkMultiFieldStmt(b *testing.B) {
+    text := `required string uuid, username, email`
+
+    for i := 0; i < b.N; i++ {
+        l := NewLexer("version stmt", text, func(t Token) {
+        })
+        l.run()
+    }
+}

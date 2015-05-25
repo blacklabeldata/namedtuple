@@ -108,7 +108,6 @@ func NewLexer(name, input string, h Handler) *Lexer {
 		input:   input + "\n",
 		state:   lexText,
 		handler: h,
-		// tokens: make(chan Token, 2),
 	}
 }
 
@@ -121,7 +120,6 @@ type Lexer struct {
 	Width   int     // width of last rune read
 	state   stateFn // next state function
 	handler Handler // token handler
-	// tokens chan Token // channel of scanned tokens
 }
 
 // Run lexes the input by executing state functions
@@ -130,7 +128,6 @@ func (l *Lexer) run() {
 	for state := lexText; state != nil; {
 		state = state(l)
 	}
-	// close(l.tokens) // no more tokens will be delivered
 }
 
 // emit passes an item pack to the client
@@ -142,9 +139,7 @@ func (l *Lexer) emit(t TokenType) {
 	}
 
 	tok := Token{t, l.input[l.Start:l.Pos]}
-	// fmt.Println("token: ", tok)
 	l.handler(tok)
-	// l.tokens <- Token{t, l.input[l.Start:l.Pos]}
 	l.Start = l.Pos
 }
 
@@ -161,7 +156,9 @@ func (l *Lexer) advance(incr int) {
 
 // skipWhitespace ignores all whitespace characters
 func (l *Lexer) skipWhitespace() {
-	l.acceptRun(" \t\r\n")
+	for unicode.Is(unicode.White_Space, l.next()) {
+	}
+	l.backup()
 	l.ignore()
 }
 
@@ -196,7 +193,7 @@ func (l *Lexer) peek() (r rune) {
 
 // accept consumes the next rune if it's in the valid set
 func (l *Lexer) accept(valid string) bool {
-	if strings.IndexRune(valid, l.next()) >= 0 {
+	if strings.IndexRune(valid, l.next()) > -1 {
 		return true
 	}
 	l.backup()
@@ -205,7 +202,7 @@ func (l *Lexer) accept(valid string) bool {
 
 // consumes a run of runes from the valid set
 func (l *Lexer) acceptRun(valid string) {
-	for strings.IndexRune(valid, l.next()) >= 0 {
+	for strings.IndexRune(valid, l.next()) > -1 {
 	}
 	l.backup()
 }
@@ -215,7 +212,6 @@ func (l *Lexer) acceptRun(valid string) {
 // state thus terminating the lexer
 func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
 	l.handler(Token{TokenError, fmt.Sprintf(l.Name+": "+format, args...)})
-	// l.tokens <- Token{TokenError, fmt.Sprintf(format, args...)}
 	return nil
 }
 
@@ -224,39 +220,40 @@ func lexText(l *Lexer) stateFn {
 OUTER:
 	for {
 		l.skipWhitespace()
+		remaining := l.remaining()
 
-		if strings.HasPrefix(l.remaining(), comment) { // Start comment
+		if strings.HasPrefix(remaining, comment) { // Start comment
 			// state function which lexes a comment
 			return lexComment
-		} else if strings.HasPrefix(l.remaining(), pkg) { // Start package decl
+		} else if strings.HasPrefix(remaining, pkg) { // Start package decl
 			// state function which lexes a package decl
 			return lexPackage
-		} else if strings.HasPrefix(l.remaining(), from) { // Start from decl
+		} else if strings.HasPrefix(remaining, from) { // Start from decl
 			// state function which lexes a from decl
 			return lexFrom
-		} else if strings.HasPrefix(l.remaining(), typeDef) { // Start type def
+		} else if strings.HasPrefix(remaining, typeDef) { // Start type def
 			// state function which lexes a type
 			return lexTypeDef
-		} else if strings.HasPrefix(l.remaining(), version) { // Start version
+		} else if strings.HasPrefix(remaining, version) { // Start version
 			// state function which lexes a version
 			return lexVersion
-		} else if strings.HasPrefix(l.remaining(), required) { // Start required field
+		} else if strings.HasPrefix(remaining, required) { // Start required field
 			// state function which lexes a field
 			l.Pos += len(required)
 			l.emit(TokenRequired)
 			l.skipWhitespace()
 
 			return lexType
-		} else if strings.HasPrefix(l.remaining(), optional) { // Start optional field
+		} else if strings.HasPrefix(remaining, optional) { // Start optional field
 			// state function which lexes a field
 			l.Pos += len(optional)
 			l.emit(TokenOptional)
 			l.skipWhitespace()
 			return lexType
-		} else if strings.HasPrefix(l.remaining(), openScope) { // Open scope
+		} else if strings.HasPrefix(remaining, openScope) { // Open scope
 			l.Pos += len(openScope)
 			l.emit(TokenOpenCurlyBracket)
-		} else if strings.HasPrefix(l.remaining(), closeScope) { // Close scope
+		} else if strings.HasPrefix(remaining, closeScope) { // Close scope
 			l.Pos += len(closeScope)
 			l.emit(TokenCloseCurlyBracket)
 		} else {
@@ -476,7 +473,6 @@ func lexImport(l *Lexer) stateFn {
 
 		// emit last type name
 		l.emit(TokenIdentifier)
-
 	}
 
 	// lex package name
@@ -498,37 +494,23 @@ func lexVersion(l *Lexer) stateFn {
 
 func lexType(l *Lexer) stateFn {
 
-	if strings.HasPrefix(l.remaining(), openArray) {
+	if l.next() == '[' {
 		l.advance(len(openArray))
 		l.emit(TokenOpenArrayBracket)
 
-		if !strings.HasPrefix(l.remaining(), closeArray) {
+		if l.next() != ']' {
 			return l.errorf("expected ]")
 		}
 		l.advance(len(closeArray))
 		l.emit(TokenCloseArrayBracket)
+	} else {
+		l.backup()
 	}
 
-	// try built in types
-	var foundType bool
-	for _, t := range TypeNames {
-		if strings.HasPrefix(l.remaining(), t) {
-			l.advance(len(t))
-			l.emit(TokenValueType)
-			foundType = true
-			break
-		}
-	}
-
-	// if it's not a built in type
-	if !foundType {
-
-		// look for type name
-		if !lexLetters(l, TokenValueType) {
-			return l.errorf("expected identifier")
-		}
+	// look for type name
+	if !lexLetters(l, TokenValueType) {
+		return l.errorf("expected identifier")
 	}
 
 	return lexIdentifier(l, lexText, true)
-	// return l.errorf("expected type name, reference or array type")
 }
