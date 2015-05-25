@@ -1,6 +1,6 @@
-namespace users
+package users.package
 
-import projects
+from some.package import Something
 
 // Location type
 type Location {
