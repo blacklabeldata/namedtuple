@@ -207,11 +207,31 @@ func (l *Lexer) acceptRun(valid string) {
 	l.backup()
 }
 
+// LineNum returns the current line based on the data processed so far
+func (l *Lexer) LineNum() int {
+	return strings.Count(l.input[:l.Pos], "\n")
+}
+
+// Offset determines the character offset from the beginning of the current line
+func (l *Lexer) Offset() int {
+
+	// find last line break
+	lineoffset := strings.LastIndex(l.input[:l.Pos], "\n")
+	if lineoffset != -1 {
+
+		// calculate current offset from last line break
+		return l.Pos - lineoffset
+	}
+
+	// first line
+	return l.Pos
+}
+
 // errorf returns an error token and terminates the scan
 // by passing back a nil pointer that will be the next
 // state thus terminating the lexer
 func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
-	l.handler(Token{TokenError, fmt.Sprintf(l.Name+": "+format, args...)})
+	l.handler(Token{TokenError, fmt.Sprintf(fmt.Sprintf("%s[%d:%d] ", l.Name, l.LineNum(), l.Offset())+format, args...)})
 	return nil
 }
 

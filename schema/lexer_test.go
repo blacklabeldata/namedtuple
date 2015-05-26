@@ -270,15 +270,15 @@ func TestVersionFail(t *testing.T) {
 
     // expecting error token and validating text
     assert.Equal(t, TokenError, tokens[1].Type)
-    assert.Equal(t, "TestVersionFail: unknown token: \"a\"", tokens[1].Value)
+    assert.Equal(t, "TestVersionFail[0:9] unknown token: \"a\"", tokens[1].Value)
 
     // expecting error token and validating text
     assert.Equal(t, TokenError, tokens[2].Type)
-    assert.Equal(t, "TestVersionFail: unknown token: \"b\"", tokens[2].Value)
+    assert.Equal(t, "TestVersionFail[0:10] unknown token: \"b\"", tokens[2].Value)
 
     // expecting error token and validating text
     assert.Equal(t, TokenError, tokens[3].Type)
-    assert.Equal(t, "TestVersionFail: unknown token: \"c\"", tokens[3].Value)
+    assert.Equal(t, "TestVersionFail[0:11] unknown token: \"c\"", tokens[3].Value)
 }
 
 func TestOpenScope(t *testing.T) {
@@ -433,6 +433,27 @@ func TestOptionalFieldType(t *testing.T) {
     // expecting identifier token and validating text
     assert.Equal(t, TokenIdentifier, tokens[2].Type)
     assert.Equal(t, "data", tokens[2].Value)
+}
+
+func TestErrorf(t *testing.T) {
+
+    text := `package sys
+
+    from users import User
+    `
+
+    l := NewLexer("TestErrorf", text, func(tok Token) {
+
+        if tok.Type == TokenError {
+            t.Log(tok)
+
+            // expecting error token and validating text
+            assert.Equal(t, "TestErrorf[4:1] testing error", tok.Value)
+        }
+    })
+
+    l.run()
+    l.errorf("testing error")
 }
 
 func TestLoop(t *testing.T) {
