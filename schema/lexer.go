@@ -466,9 +466,9 @@ func lexImport(l *Lexer) stateFn {
 				// emit type name
 				l.emit(TokenIdentifier)
 
-				// skip comma
+				// emit comma
 				l.next()
-				l.ignore()
+				l.emit(TokenComma)
 				lastComma = true
 
 			case r == '\n':
