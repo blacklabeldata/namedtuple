@@ -1,5 +1,46 @@
 package schema
 
+import "sync"
+
+// PackageList is an interface for a package registry.
+type PackageList interface {
+    Add(pkg Package)
+    Remove(pkg string)
+    Get(name string) (Package, bool)
+}
+
+// packageList contains a registry of known packages
+type packageList struct {
+    pkgList map[string]Package
+    lock    sync.Mutex
+}
+
+func (p *packageList) Add(pkg Package) {
+    p.lock.Lock()
+    p.pkgList[pkg.Name] = pkg
+    p.lock.Unlock()
+    return
+}
+
+func (p *packageList) Remove(pkg string) {
+    p.lock.Lock()
+    delete(p.pkgList, pkg)
+    p.lock.Unlock()
+    return
+}
+
+func (p *packageList) Get(name string) (pkg Package, ok bool) {
+    p.lock.Lock()
+    pkg, ok = p.pkgList[name]
+    p.lock.Unlock()
+    return
+}
+
+// NewPackageList creates a new package registry
+func NewPackageList() PackageList {
+    return &packageList{}
+}
+
 // Package contains an entire schema document.
 type Package struct {
     Name    string
