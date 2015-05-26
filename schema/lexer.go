@@ -25,18 +25,15 @@ const (
 	TokenCloseCurlyBracket                  // 10 Right }
 	TokenOpenArrayBracket                   // 11 Open Array [
 	TokenCloseArrayBracket                  // 12 Close Array ]
-	TokenEquals                             // 13 Equals sign
-	TokenIdentifier                         // 14 Message or Field Name
-	TokenReference                          // 15 Message type reference
-	TokenComma                              // 16 Comma
-	TokenPeriod                             // 17 Period
-	TokenNamespace                          // 18 Namespace keyword
-	TokenImport                             // 19 Import keyword
-	TokenFrom                               // 20 From keyword
-	TokenAs                                 // 21 As keyword
-	TokenPackage                            // 22 Package keyword
-	TokenPackageName                        // 23 Package name
-	TokenAsterisk                           // 24 Package all
+	TokenIdentifier                         // 13 Message or Field Name
+	TokenComma                              // 14 Comma
+	TokenPeriod                             // 15 Period
+	TokenImport                             // 16 Import keyword
+	TokenFrom                               // 17 From keyword
+	TokenAs                                 // 18 As keyword
+	TokenPackage                            // 19 Package keyword
+	TokenPackageName                        // 20 Package name
+	TokenAsterisk                           // 21 Package all
 )
 
 // Constant Punctuation and Keywords
