@@ -25,18 +25,15 @@ const (
 	TokenCloseCurlyBracket                  // 10 Right }
 	TokenOpenArrayBracket                   // 11 Open Array [
 	TokenCloseArrayBracket                  // 12 Close Array ]
-	TokenEquals                             // 13 Equals sign
-	TokenIdentifier                         // 14 Message or Field Name
-	TokenReference                          // 15 Message type reference
-	TokenComma                              // 16 Comma
-	TokenPeriod                             // 17 Period
-	TokenNamespace                          // 18 Namespace keyword
-	TokenImport                             // 19 Import keyword
-	TokenFrom                               // 20 From keyword
-	TokenAs                                 // 21 As keyword
-	TokenPackage                            // 22 Package keyword
-	TokenPackageName                        // 23 Package name
-	TokenAsterisk                           // 24 Package all
+	TokenIdentifier                         // 13 Message or Field Name
+	TokenComma                              // 14 Comma
+	TokenPeriod                             // 15 Period
+	TokenImport                             // 16 Import keyword
+	TokenFrom                               // 17 From keyword
+	TokenAs                                 // 18 As keyword
+	TokenPackage                            // 19 Package keyword
+	TokenPackageName                        // 20 Package name
+	TokenAsterisk                           // 21 Package all
 )
 
 // Constant Punctuation and Keywords
@@ -45,9 +42,7 @@ const (
 	closeScope = "}"
 	openArray  = "["
 	closeArray = "]"
-	equals     = "="
 	comment    = "//"
-	dollarRef  = "$"
 	typeDef    = "type"
 	version    = "version"
 	required   = "required"
@@ -207,11 +202,31 @@ func (l *Lexer) acceptRun(valid string) {
 	l.backup()
 }
 
+// LineNum returns the current line based on the data processed so far
+func (l *Lexer) LineNum() int {
+	return strings.Count(l.input[:l.Pos], "\n")
+}
+
+// Offset determines the character offset from the beginning of the current line
+func (l *Lexer) Offset() int {
+
+	// find last line break
+	lineoffset := strings.LastIndex(l.input[:l.Pos], "\n")
+	if lineoffset != -1 {
+
+		// calculate current offset from last line break
+		return l.Pos - lineoffset
+	}
+
+	// first line
+	return l.Pos
+}
+
 // errorf returns an error token and terminates the scan
 // by passing back a nil pointer that will be the next
 // state thus terminating the lexer
 func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
-	l.handler(Token{TokenError, fmt.Sprintf(l.Name+": "+format, args...)})
+	l.handler(Token{TokenError, fmt.Sprintf(fmt.Sprintf("%s[%d:%d] ", l.Name, l.LineNum(), l.Offset())+format, args...)})
 	return nil
 }
 
@@ -451,9 +466,9 @@ func lexImport(l *Lexer) stateFn {
 				// emit type name
 				l.emit(TokenIdentifier)
 
-				// skip comma
+				// emit comma
 				l.next()
-				l.ignore()
+				l.emit(TokenComma)
 				lastComma = true
 
 			case r == '\n':
