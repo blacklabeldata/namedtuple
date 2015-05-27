@@ -33,8 +33,8 @@ func TestParse(t *testing.T) {
     parser := NewParser(pkgList, config)
     pkg, err := parser.Parse("TestParse", text)
 
-    // t.Logf("%#v\n", pkg)
-    // t.Log(err)
+    t.Logf("%#v\n", pkg)
+    t.Log(err)
 }
 
 func BenchmarkParse(b *testing.B) {
