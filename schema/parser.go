@@ -1,7 +1,13 @@
 package schema
 
 import (
+    "fmt"
+    "io"
+    "io/ioutil"
+    "os"
+    "path/filepath"
     "strconv"
+    "strings"
     "sync"
 )
 
@@ -19,54 +25,124 @@ func (s SyntaxError) Error() string {
     return s.Message
 }
 
-// // LoadFile reads a schema document from a file.
-// func LoadFile(file *os.File, config Config) (Package, error) {
+// LoadDirectory reads all the schema files from a directory.
+func LoadDirectory(dir string, parser Parser) (err error) {
 
-//     // read file
-//     bytes, err := ioutil.ReadAll(file)
-//     if err != nil {
-//         return Package{}, err
-//     }
+    // Open dir for reading
+    d, err := os.Open(dir)
+    if err != nil {
+        return
+    }
 
-//     // convert to string and load
-//     return LoadPackage(string(bytes), config)
-// }
+    // Iterate over all the files in the directory.
+    for {
 
-// // LoadPackage parses a text string.
-// func LoadPackage(text string, config Config) (Package, error) {
-//     return Package{}, nil
-// }
+        // Only read 128 files at a time.
+        if fis, err := d.Readdir(128); err == nil {
 
-func NewParser(pkgList PackageList, config Config) Parser {
-    var lock sync.Mutex
-    return Parser{config, &pkgList, []Token{}, 0, lock}
+            // Read each entry
+            for _, fi := range fis {
+                // fmt.Println("%#v", fi)
+
+                // If the FileInfo is a directory, read the directory.
+                // Otherwise, read the file.
+                switch fi.IsDir() {
+                case true:
+
+                    // return error if there is one
+                    if err := LoadDirectory(fi.Name(), parser); err != nil {
+                        return err
+                    }
+                case false:
+
+                    // All schema files should end with .nt
+                    if !strings.HasSuffix(fi.Name(), ".ent") {
+                        break
+                    }
+
+                    // Read the file
+                    if _, err := LoadFile(filepath.Join(dir, fi.Name()), parser); err != nil {
+                        return err
+                    }
+                }
+            }
+        } else if err == io.EOF {
+            // If there are no more files in the directory, break.
+            break
+        } else {
+            // If there is any other error, return it.
+            return err
+        }
+    }
+
+    // If you have reached this far, you are done.
+    return nil
 }
 
-type Parser struct {
-    config  Config
-    pkgList *PackageList
+// LoadFile reads a schema document from a file.
+func LoadFile(filename string, parser Parser) (Package, error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return Package{}, err
+    }
+    defer file.Close()
+
+    // read file
+    bytes, err := ioutil.ReadAll(file)
+    if err != nil {
+        return Package{}, err
+    }
+
+    // convert to string and load
+    return parser.Parse(file.Name(), string(bytes))
+}
+
+// LoadPackage parses a text string.
+func LoadPackage(parser Parser, name, text string) (Package, error) {
+    return parser.Parse(name, text)
+}
+
+func NewParser(pkgList PackageList) Parser {
+    var lock sync.Mutex
+    return &parser{pkgList, []Token{}, 0, lock, ""}
+}
+
+type Parser interface {
+    Parse(name, text string) (Package, error)
+}
+
+type parser struct {
+    pkgList PackageList
     tokens  []Token
     pos     int
     lock    sync.Mutex
+    name    string
 }
 
-func (p *Parser) Parse(name string, text string) (pkg Package, err error) {
+func (p *parser) Parse(name string, text string) (pkg Package, err error) {
     p.lock.Lock()
     defer p.lock.Unlock()
+    p.name = name
 
     l := NewLexer(name, text, func(tok Token) {
         p.tokens = append(p.tokens, tok)
     })
     l.run()
 
-    return p.parsePackage()
+    pkg, err = p.parsePackage()
+
+    // if no error, add to package list
+    if err == nil {
+        p.pkgList.Add(pkg)
+    }
+    return
 }
 
-func (p *Parser) advance(skip int) {
+func (p *parser) advance(skip int) {
     p.pos += skip
 }
 
-func (p *Parser) current() (tok Token) {
+func (p *parser) current() (tok Token) {
     if p.pos >= len(p.tokens) {
         tok = Token{TokenError, "end of input"}
     } else {
@@ -79,7 +155,7 @@ func (p *Parser) current() (tok Token) {
     return
 }
 
-func (p *Parser) next() (tok Token) {
+func (p *parser) next() (tok Token) {
     tok = p.current()
     p.advance(1)
 
@@ -91,32 +167,33 @@ func (p *Parser) next() (tok Token) {
     return
 }
 
-func (p *Parser) backup() {
+func (p *parser) backup() {
     if p.pos > 0 {
         p.pos--
     }
 }
 
-func (p *Parser) typeCheck(t TokenType, errMsg string) (tok Token, err error) {
+func (p *parser) typeCheck(t TokenType, errMsg string) (tok Token, err error) {
 
     // next token
     tok = p.next()
 
     // is it an error
     if tok.Type == TokenError {
-        return tok, SyntaxError{tok.Value}
+        return tok, SyntaxError{p.name + ": " + tok.Value}
     }
 
     // is it the correct type
     if tok.Type != t {
-        return tok, SyntaxError{errMsg}
+        fmt.Println(p.tokens[p.pos:])
+        return tok, SyntaxError{p.name + ": " + errMsg}
     }
 
     // currect token type
     return
 }
 
-func (p *Parser) parsePackage() (pkg Package, err error) {
+func (p *parser) parsePackage() (pkg Package, err error) {
     if len(p.tokens) == 0 {
         return pkg, SyntaxError{"empty input string"}
     }
@@ -147,7 +224,7 @@ func (p *Parser) parsePackage() (pkg Package, err error) {
     return
 }
 
-func (p *Parser) parseImports(pkg *Package) (err error) {
+func (p *parser) parseImports(pkg *Package) (err error) {
 
     for p.current().Type == TokenFrom {
 
@@ -199,7 +276,7 @@ func (p *Parser) parseImports(pkg *Package) (err error) {
     return nil
 }
 
-func (p *Parser) parseTypes(pkg *Package) (err error) {
+func (p *parser) parseTypes(pkg *Package) (err error) {
 
     // iterate over type defs
     for p.current().Type == TokenTypeDef {
@@ -242,7 +319,7 @@ func (p *Parser) parseTypes(pkg *Package) (err error) {
     return nil
 }
 
-func (p *Parser) parseVersions(pkg *Package, t *Type) (err error) {
+func (p *parser) parseVersions(pkg *Package, t *Type) (err error) {
 
     // iterate over versions
     for p.current().Type == TokenVersion {
@@ -297,7 +374,7 @@ func (p *Parser) parseVersions(pkg *Package, t *Type) (err error) {
     return nil
 }
 
-func (p *Parser) parseField(pkg *Package, ver *Version) (err error) {
+func (p *parser) parseField(pkg *Package, ver *Version) (err error) {
 
     var field Field
     switch p.current().Type {
