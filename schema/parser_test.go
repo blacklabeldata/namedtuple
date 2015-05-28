@@ -27,10 +27,9 @@ func TestParse(t *testing.T) {
     `
 
     pkgList := NewPackageList()
-    config := Config{}
 
     // create parser
-    parser := NewParser(pkgList, config)
+    parser := NewParser(pkgList)
     pkg, err := parser.Parse("TestParse", text)
     assert.Nil(t, err)
     assert.NotNil(t, pkg)
@@ -78,6 +77,18 @@ func TestParse(t *testing.T) {
     t.Log(err)
 }
 
+func TestLoadDirectory(t *testing.T) {
+
+    pkgList := NewPackageList()
+    p := NewParser(pkgList)
+    err := LoadDirectory("examples", p)
+    t.Log(err)
+
+    t.Log(pkgList)
+    t.Log(pkgList.Get("users"))
+
+}
+
 func BenchmarkParse(b *testing.B) {
 
     text := `
@@ -102,10 +113,9 @@ func BenchmarkParse(b *testing.B) {
     `
 
     pkgList := NewPackageList()
-    config := Config{}
 
     // create parser
-    parser := NewParser(pkgList, config)
+    parser := NewParser(pkgList)
 
     for i := 0; i < b.N; i++ {
         parser.Parse("TestParse", text)
