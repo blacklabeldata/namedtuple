@@ -15,12 +15,12 @@ var syncHash SynchronizedHash = NewHasher(fnv.New32a())
 var NIL Tuple = Tuple{}
 
 type TupleType struct {
-	Namspace     string // Tuple Namespace
-	Name         string // Tuple Name
-	NamspaceHash uint32
-	Hash         uint32
-	versions     [][]Field
-	fields       map[string]int
+	Namespace     string // Tuple Namespace
+	Name          string // Tuple Name
+	NamespaceHash uint32
+	Hash          uint32
+	versions      [][]Field
+	fields        map[string]int
 }
 
 type Version struct {
@@ -216,7 +216,7 @@ func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
 	return TupleHeader{
 		ProtocolVersion: 0,
 		TupleVersion:    tupleVersion,
-		NamespaceHash:   b.tupleType.NamspaceHash,
+		NamespaceHash:   b.tupleType.NamespaceHash,
 		Hash:            b.tupleType.Hash,
 		FieldCount:      totalFieldCount,
 		FieldSize:       fieldSize,

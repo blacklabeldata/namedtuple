@@ -3,12 +3,11 @@ package namedtuple
 import (
 	"encoding/binary"
 	"errors"
-	// "github.com/swiftkick-io/xbinary"
 )
 
-// skip magic num      (+3) - {ENT}
-// skip ENT version    (+1) - {uint8}
+// skip proto version  (+1) - {uint8}
 // skip tuple version  (+1) - {uint8}
+// skip namespace code (+4) - {uint32}
 // skip hash code      (+4) - {uint32}
 // skip field count    (+4) - {uint32}
 // skip field size     (+1) - {1,2,4,8} bytes
@@ -18,35 +17,36 @@ import (
 func Decode(r Registry, data []byte) (Tuple, error) {
 
 	// fail fast - minimum fixed header size is 14
-	if len(data) < 14 {
+	if len(data) < 15 {
 		return NIL, errors.New("Invalid Header: Too small")
 	}
 
 	header := TupleHeader{}
-	header.ProtocolVersion = uint8(data[3])
-	header.TupleVersion = uint8(data[4])
-	header.Hash = binary.LittleEndian.Uint32(data[5:])
+	header.ProtocolVersion = uint8(data[0])
+	header.TupleVersion = uint8(data[1])
+	header.NamespaceHash = binary.LittleEndian.Uint32(data[2:])
+	header.Hash = binary.LittleEndian.Uint32(data[6:])
 
 	// attach tuple type
 	// var tupleType TupleType
-	tupleType, exists := r.Get(header.Hash)
+	tupleType, exists := r.GetWithHash(header.NamespaceHash, header.Hash)
 	if !exists {
 		return NIL, errors.New("Unknown tuple type")
 	}
 	header.Type = tupleType
 
 	// fields
-	header.FieldCount = binary.LittleEndian.Uint32(data[9:])
-	header.FieldSize = uint8(data[13])
+	header.FieldCount = binary.LittleEndian.Uint32(data[10:])
+	header.FieldSize = uint8(data[14])
 
 	// now we know how large the full header is with field offsets and data length
-	fullHeaderSize := 14 + int(header.FieldCount)*int(header.FieldSize) + int(header.FieldSize)
+	fullHeaderSize := 15 + int(header.FieldCount)*int(header.FieldSize) + int(header.FieldSize)
 	if len(data) < fullHeaderSize {
 		return NIL, errors.New("Invalid Header: Too small")
 	}
 
 	// current position
-	pos := 14
+	pos := 15
 
 	// decoding field offsets
 	header.Offsets = make([]uint64, header.FieldCount)
