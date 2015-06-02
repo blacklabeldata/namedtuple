@@ -38,7 +38,8 @@ func (p *packageList) Get(name string) (pkg Package, ok bool) {
 
 // NewPackageList creates a new package registry
 func NewPackageList() PackageList {
-    return &packageList{}
+    var lock sync.Mutex
+    return &packageList{make(map[string]Package), lock}
 }
 
 // Package contains an entire schema document.

@@ -55,7 +55,7 @@ func TestPutTimestampPass(t *testing.T) {
 	assert.Equal(t, 9, wrote)
 
 	// test data validity
-	assert.Equal(t, TimestampCode.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, TimestampCode.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Int64(buffer, 1)
 	assert.Equal(t, now.UnixNano(), value)

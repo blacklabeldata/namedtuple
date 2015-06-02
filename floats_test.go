@@ -54,7 +54,7 @@ func TestPutFloat32Pass(t *testing.T) {
 	assert.Equal(t, 5, wrote)
 
 	// test data validity
-	assert.Equal(t, FloatCode.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, FloatCode.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Float32(buffer, 1)
 	assert.Equal(t, float32(3.14159), value)
@@ -110,7 +110,7 @@ func TestPutFloat64Pass(t *testing.T) {
 	assert.Equal(t, 9, wrote)
 
 	// test data validity
-	assert.Equal(t, DoubleCode.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, DoubleCode.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Float64(buffer, 1)
 	assert.Equal(t, float64(3.14159), value)

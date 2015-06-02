@@ -40,7 +40,7 @@ func TestBuilderPutUint8Pass(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedInt8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedInt8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -92,7 +92,7 @@ func TestBuilderPutInt8Pass(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, Int8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Int8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -145,7 +145,7 @@ func TestBuilderPutUint16Pass_1(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedShort8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedShort8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -192,7 +192,7 @@ func TestBuilderPutUint16Pass_2(t *testing.T) {
 	assert.Equal(t, 3, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedShort16Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedShort16Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint16(buffer, 1)
 	assert.Equal(t, uint16(300), value)
@@ -248,7 +248,7 @@ func TestBuilderPutInt16Pass_1(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, Short8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Short8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -295,7 +295,7 @@ func TestBuilderPutInt16Pass_2(t *testing.T) {
 	assert.Equal(t, 3, wrote)
 
 	// test data validity
-	assert.Equal(t, Short16Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Short16Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Int16(buffer, 1)
 	assert.Equal(t, int16(-300), value)
@@ -351,7 +351,7 @@ func TestBuilderPutUint32Pass_1(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedInt8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedInt8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -398,7 +398,7 @@ func TestBuilderPutUint32Pass_2(t *testing.T) {
 	assert.Equal(t, 3, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedInt16Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedInt16Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint32(buffer, 1)
 	assert.Equal(t, uint16(300), value)
@@ -447,7 +447,7 @@ func TestBuilderPutUint32Pass_3(t *testing.T) {
 	assert.Equal(t, 5, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedInt32Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedInt32Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint32(buffer, 1)
 	assert.Equal(t, uint32(135000), value)
@@ -503,7 +503,7 @@ func TestBuilderPutInt32Pass_1(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, Int8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Int8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -550,10 +550,10 @@ func TestBuilderPutInt32Pass_2(t *testing.T) {
 	assert.Equal(t, 3, wrote)
 
 	// test data validity
-	assert.Equal(t, Int16Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Int16Code.OpCode, uint8(builder.buffer[0]))
 
-	value, err := xbinary.LittleEndian.Int32(buffer, 1)
-	assert.Equal(t, uint16(300), value)
+	value, err := xbinary.LittleEndian.Int16(buffer, 1)
+	assert.Equal(t, int16(300), value)
 
 	// validate field offset
 	assert.Equal(t, 0, builder.offsets["uint32"])
@@ -599,10 +599,10 @@ func TestBuilderPutInt32Pass_3(t *testing.T) {
 	assert.Equal(t, 5, wrote)
 
 	// test data validity
-	assert.Equal(t, Int32Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Int32Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Int32(buffer, 1)
-	assert.Equal(t, uint32(135000), value)
+	assert.Equal(t, int32(135000), value)
 
 	// validate field offset
 	assert.Equal(t, 0, builder.offsets["uint32"])
@@ -655,7 +655,7 @@ func TestBuilderPutUint64Pass_1(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedLong8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedLong8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -702,7 +702,7 @@ func TestBuilderPutUint64Pass_2(t *testing.T) {
 	assert.Equal(t, 3, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedLong16Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedLong16Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint16(buffer, 1)
 	assert.Equal(t, uint16(300), value)
@@ -751,7 +751,7 @@ func TestBuilderPutUint64Pass_3(t *testing.T) {
 	assert.Equal(t, 5, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedLong32Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedLong32Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint32(buffer, 1)
 	assert.Equal(t, uint64(135000), value)
@@ -800,7 +800,7 @@ func TestBuilderPutUint64Pass_4(t *testing.T) {
 	assert.Equal(t, 9, wrote)
 
 	// test data validity
-	assert.Equal(t, UnsignedLong64Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, UnsignedLong64Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint64(buffer, 1)
 	assert.Equal(t, uint64(17179869184), value)
@@ -856,7 +856,7 @@ func TestBuilderPutInt64Pass_1(t *testing.T) {
 	assert.Equal(t, 2, wrote)
 
 	// test data validity
-	assert.Equal(t, Long8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Long8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 20, int(builder.buffer[1]))
 
 	// validate field offset
@@ -903,7 +903,7 @@ func TestBuilderPutInt64Pass_2(t *testing.T) {
 	assert.Equal(t, 3, wrote)
 
 	// test data validity
-	assert.Equal(t, Long16Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Long16Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Int16(buffer, 1)
 	assert.Equal(t, int16(300), value)
@@ -952,7 +952,7 @@ func TestBuilderPutInt64Pass_3(t *testing.T) {
 	assert.Equal(t, 5, wrote)
 
 	// test data validity
-	assert.Equal(t, Long32Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Long32Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Int32(buffer, 1)
 	assert.Equal(t, int64(135000), value)
@@ -1001,7 +1001,7 @@ func TestBuilderPutInt64Pass_4(t *testing.T) {
 	assert.Equal(t, 9, wrote)
 
 	// test data validity
-	assert.Equal(t, Long64Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, Long64Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Int64(buffer, 1)
 	assert.Equal(t, int64(17179869184), value)
