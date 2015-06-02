@@ -1,7 +1,6 @@
 package schema
 
 import (
-    "fmt"
     "io"
     "io/ioutil"
     "os"
@@ -185,7 +184,7 @@ func (p *parser) typeCheck(t TokenType, errMsg string) (tok Token, err error) {
 
     // is it the correct type
     if tok.Type != t {
-        fmt.Println(p.tokens[p.pos:])
+        // fmt.Println(p.tokens[p.pos:])
         return tok, SyntaxError{p.name + ": " + errMsg}
     }
 
@@ -431,20 +430,40 @@ func (p *parser) parseField(pkg *Package, ver *Version) (err error) {
         }
     }
 
-    // if still not found
+    // If type has still not been found, return error
     if !found {
         return SyntaxError{"unknown type '" + typeName + "'"}
     }
 
-    // consume field name
+    // Skip type name
     p.advance(1)
-    tok, err = p.typeCheck(TokenIdentifier, "expected field name")
-    if err != nil {
-        return err
-    }
-    field.Name = tok.Value
 
-    // fmt.Printf("%#v\n", field)
-    ver.Fields = append(ver.Fields, field)
+    // Consume field names
+    for {
+
+        // Perform type check
+        tok, err = p.typeCheck(TokenIdentifier, "expected field name")
+        if err != nil {
+            return err
+        }
+
+        // Set field name
+        field.Name = tok.Value
+
+        // Add field to version
+        ver.Fields = append(ver.Fields, field)
+
+        // Determine if next token is a comma
+        tok, err = p.typeCheck(TokenComma, "")
+
+        // If the next token is not a comma, backup
+        if err != nil {
+            break
+        } else {
+            continue
+        }
+    }
+    p.backup()
+
     return nil
 }

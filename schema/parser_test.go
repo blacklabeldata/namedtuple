@@ -8,15 +8,14 @@ func TestParse(t *testing.T) {
     text := `
     package users
 
-    from locale import Location
+    from locale import Location, Country
 
     // This is a comment
     type User {
         // version comment
         version 1 {
-            required string uuid
-            required string username
-            optional uint8 age
+            required string uuid, username
+            optional uint8 age, num
         }
 
         // 11/15/14
@@ -40,8 +39,9 @@ func TestParse(t *testing.T) {
     // test imports
     assert.Equal(t, len(pkg.Imports), 1)
     assert.Equal(t, pkg.Imports[0].PackageName, "locale")
-    assert.Equal(t, len(pkg.Imports[0].TypeNames), 1)
+    assert.Equal(t, len(pkg.Imports[0].TypeNames), 2)
     assert.Equal(t, pkg.Imports[0].TypeNames[0], "Location")
+    assert.Equal(t, pkg.Imports[0].TypeNames[1], "Country")
 
     // test types
     assert.Equal(t, len(pkg.Types), 1)
@@ -50,7 +50,7 @@ func TestParse(t *testing.T) {
     // test versions
     assert.Equal(t, len(pkg.Types[0].Versions), 2)
     assert.Equal(t, pkg.Types[0].Versions[0].Number, 1)
-    assert.Equal(t, len(pkg.Types[0].Versions[0].Fields), 3)
+    assert.Equal(t, len(pkg.Types[0].Versions[0].Fields), 4)
 
     assert.Equal(t, pkg.Types[0].Versions[0].Fields[0].IsRequired, true)
     assert.Equal(t, pkg.Types[0].Versions[0].Fields[0].IsArray, false)
@@ -66,6 +66,11 @@ func TestParse(t *testing.T) {
     assert.Equal(t, pkg.Types[0].Versions[0].Fields[2].IsArray, false)
     assert.Equal(t, pkg.Types[0].Versions[0].Fields[2].Type, "uint8")
     assert.Equal(t, pkg.Types[0].Versions[0].Fields[2].Name, "age")
+
+    assert.Equal(t, pkg.Types[0].Versions[0].Fields[3].IsRequired, false)
+    assert.Equal(t, pkg.Types[0].Versions[0].Fields[3].IsArray, false)
+    assert.Equal(t, pkg.Types[0].Versions[0].Fields[3].Type, "uint8")
+    assert.Equal(t, pkg.Types[0].Versions[0].Fields[3].Name, "num")
 
     assert.Equal(t, pkg.Types[0].Versions[1].Number, 2)
     assert.Equal(t, pkg.Types[0].Versions[1].Fields[0].IsRequired, false)
