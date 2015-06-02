@@ -84,7 +84,7 @@ func (r *Registry) typeSignature(namespace, typename string) (hash uint64) {
 func (r *Registry) typeSignatureHash(nhash, thash uint32) (hash uint64) {
 
 	// Combine hashes
-	hash = uint64(thash)
-	hash |= uint64(nhash) << 32
+	hash = uint64(thash) << 32
+	hash |= uint64(nhash)
 	return
 }
