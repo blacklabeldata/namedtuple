@@ -86,18 +86,19 @@ func TestRegistryContainsTrue(t *testing.T) {
 
 	// add User type
 	reg.Register(User)
+	hash := reg.typeSignature(User.Namespace, User.Name)
 
 	// make sure it contains the User type
-	assert.Equal(t, User, reg.content[User.Hash])
+	assert.Equal(t, User, reg.content[hash])
 
 	// test contains function
 	assert.Equal(t, true, reg.Contains(User))
 
 	// test contains hash function
-	assert.Equal(t, true, reg.ContainsHash(User.Hash))
+	assert.Equal(t, true, reg.ContainsHash(hash))
 
 	// test contains name function
-	assert.Equal(t, true, reg.ContainsName(User.Name))
+	assert.Equal(t, true, reg.ContainsName(User.Namespace, User.Name))
 }
 
 func TestRegistryContainsFalse(t *testing.T) {
@@ -107,21 +108,22 @@ func TestRegistryContainsFalse(t *testing.T) {
 
 	// create type
 	User := createTestTupleType()
+	hash := reg.typeSignature(User.Namespace, User.Name)
 
 	// DO NOT add User type
 	// reg.Register(User)
 
 	// make sure it DOES NOT contains the User type
-	assert.Equal(t, TupleType{}, reg.content[User.Hash])
+	assert.Equal(t, TupleType{}, reg.content[hash])
 
 	// test contains function
 	assert.Equal(t, false, reg.Contains(User))
 
 	// test contains hash function
-	assert.Equal(t, false, reg.ContainsHash(User.Hash))
+	assert.Equal(t, false, reg.ContainsHash(hash))
 
 	// test contains name function
-	assert.Equal(t, false, reg.ContainsName(User.Name))
+	assert.Equal(t, false, reg.ContainsName(User.Namespace, User.Name))
 }
 
 func TestRegistryGetTrue(t *testing.T) {
@@ -136,7 +138,7 @@ func TestRegistryGetTrue(t *testing.T) {
 	reg.Register(User)
 
 	// make sure the registry contains the same User type
-	tupleType, exists := reg.Get(User.Hash)
+	tupleType, exists := reg.Get(User.Namespace, User.Name)
 	assert.Equal(t, User, tupleType)
 	assert.Equal(t, true, exists)
 }
@@ -153,7 +155,7 @@ func TestRegistryGetFalse(t *testing.T) {
 	// reg.Register(User)
 
 	// make sure the registry contains the same User type
-	tupleType, exists := reg.Get(User.Hash)
+	tupleType, exists := reg.Get(User.Namespace, User.Name)
 	assert.Equal(t, TupleType{}, tupleType)
 	assert.Equal(t, false, exists)
 }
