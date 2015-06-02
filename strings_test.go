@@ -51,7 +51,7 @@ func TestPutStringPass_1(t *testing.T) {
 	assert.Equal(t, 12, wrote)
 
 	// test data validity
-	assert.Equal(t, String8Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, String8Code.OpCode, uint8(builder.buffer[0]))
 	assert.Equal(t, 10, int(builder.buffer[1]))
 
 	value, err := xbinary.LittleEndian.String(buffer, 2, 10)
@@ -108,7 +108,7 @@ func TestPutStringPass_2(t *testing.T) {
 	assert.Equal(t, 303, wrote)
 
 	// test data validity
-	assert.Equal(t, String16Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, String16Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint16(buffer, 1)
 	assert.Equal(t, 300, int(value))
@@ -168,7 +168,7 @@ func TestPutStringPass_3(t *testing.T) {
 	assert.Equal(t, 135005, wrote)
 
 	// test data validity
-	assert.Equal(t, String32Code.OpCode, int(builder.buffer[0]))
+	assert.Equal(t, String32Code.OpCode, uint8(builder.buffer[0]))
 
 	value, err := xbinary.LittleEndian.Uint32(buffer, 1)
 	assert.Equal(t, 135000, int(value))
