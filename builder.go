@@ -4,9 +4,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"hash/fnv"
+	"io"
 	"math"
-
-	"github.com/swiftkick-io/xbinary"
 )
 
 var syncHash SynchronizedHash = NewHasher(fnv.New32a())
@@ -253,13 +252,12 @@ func (t *TupleHeader) Size() int {
 	return size
 }
 
-func (t *TupleHeader) Write(dst []byte) (int, error) {
+func (t *TupleHeader) WriteTo(writer io.Writer) (int64, error) {
 
-	if len(dst) < t.Size() {
-		return 0, xbinary.ErrOutOfRange
-	} else if len(t.Offsets) != int(t.FieldCount) {
+	if len(t.Offsets) != int(t.FieldCount) {
 		return 0, errors.New("Invalid Header: Field count does not equal number of field offsets")
 	}
+	dst := make([]byte, t.Size())
 
 	// copy([]byte("ENT"), dst)
 	dst[0] = byte(t.ProtocolVersion)
@@ -269,7 +267,7 @@ func (t *TupleHeader) Write(dst []byte) (int, error) {
 	binary.LittleEndian.PutUint32(dst[10:], t.FieldCount)
 	dst[14] = byte(t.FieldSize)
 
-	pos := 15
+	pos := int64(15)
 	switch t.FieldSize {
 	case 1:
 		for _, offset := range t.Offsets {
@@ -298,8 +296,10 @@ func (t *TupleHeader) Write(dst []byte) (int, error) {
 	default:
 		return pos, errors.New("Invalid Header: Field size must be 1,2,4 or 8 bytes")
 	}
-	pos += int(t.FieldSize)
-	return pos, nil
+	pos += int64(t.FieldSize)
+
+	n, err := writer.Write(dst)
+	return int64(n), err
 }
 
 type Tuple struct {
@@ -311,19 +311,21 @@ func (t *Tuple) Is(tupleType TupleType) bool {
 	return t.Header.Hash == tupleType.Hash
 }
 
-func (t *Tuple) Write(data []byte) (int, error) {
-	if (t.Size() + t.Header.Size()) > len(data) {
-		return 0, xbinary.ErrOutOfRange
-	}
+func (t *Tuple) WriteTo(w io.Writer) (int64, error) {
 
 	// write header
 	var wrote int
-	if wrote, err := t.Header.Write(data); err != nil {
+	if wrote, err := t.Header.WriteTo(w); err != nil {
 		return wrote, nil
 	}
 
-	wrote += copy(data[wrote:], t.data)
-	return wrote, nil
+	n, err := w.Write(t.data)
+	if err != nil {
+		return int64(n), err
+	}
+
+	// wrote += copy(data[wrote:], t.data)
+	return int64(wrote + n), nil
 }
 
 func (t *Tuple) Size() int {
@@ -341,4 +343,8 @@ func (t *Tuple) Offset(field string) (int, error) {
 		return 0, errors.New("Invalid field index")
 	}
 	return int(t.Header.Offsets[index]), nil
+}
+
+func (t *Tuple) Payload() []byte {
+	return t.data
 }
