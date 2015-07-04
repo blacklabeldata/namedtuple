@@ -1,6 +1,7 @@
 package namedtuple
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"hash/fnv"
@@ -311,6 +312,28 @@ func (t *Tuple) Is(tupleType TupleType) bool {
 	return t.Header.Hash == tupleType.Hash
 }
 
+func (t *Tuple) WriteAt(p []byte, off int64) (n int, err error) {
+
+	size := t.Header.Size()
+	if int64(len(p))-off < int64(size+len(t.data)) {
+		return 0, errors.New("Buffer too small")
+	}
+
+	// Write header
+	buf := bytes.NewBuffer(p[off:])
+	if written, err := t.Header.WriteTo(buf); err == nil {
+		n += int(written)
+	} else {
+		return 0, err
+	}
+
+	// Copy payload
+	var offset = int(off) + n
+	copy(p[offset:], t.data)
+
+	return
+}
+
 func (t *Tuple) WriteTo(w io.Writer) (int64, error) {
 
 	// write header
@@ -323,8 +346,6 @@ func (t *Tuple) WriteTo(w io.Writer) (int64, error) {
 	if err != nil {
 		return int64(n), err
 	}
-
-	// wrote += copy(data[wrote:], t.data)
 	return int64(wrote + n), nil
 }
 
