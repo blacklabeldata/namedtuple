@@ -7,7 +7,6 @@ import (
 )
 
 func BenchmarkPutField_1(b *testing.B) {
-
 	User := createTestTupleType()
 
 	// create builder
@@ -19,6 +18,7 @@ func BenchmarkPutField_1(b *testing.B) {
 		builder.PutString("uuid", "0123456789abcdef")
 		builder.PutString("username", "username")
 		builder.PutUint8("age", uint8(25))
+		builder.Build()
 		builder.reset()
 	}
 }
