@@ -77,16 +77,9 @@ func (t *TupleBuilder) typeCheck(fieldName string, fieldType FieldType) error {
 	if field.Type != fieldType {
 		return errors.New("Incorrect field type: " + fieldName)
 	}
+
 	return nil
 }
-
-// func (b *TupleBuilder) PutStringArray(field string, value []string) (wrote int, err error) {
-// 	return 0, nil
-// 	// wrote, err = xbinary.LittleEndian.PutStringArray(b.buffer, b.pos, value)
-// 	// b.offsets[field] = b.pos
-// 	// b.pos += wrote
-// 	// return
-// }
 
 func (b *TupleBuilder) Build() (Tuple, error) {
 	defer b.reset()
