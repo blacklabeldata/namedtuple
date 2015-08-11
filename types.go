@@ -30,6 +30,7 @@ const (
 	StringField
 	StringArrayField
 	BooleanField
+	BooleanArrayField
 )
 
 // TypeCode represents a field type
