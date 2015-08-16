@@ -5,6 +5,12 @@ import (
 	"sync"
 )
 
+var DefaultRegistry Registry
+
+func init() {
+	DefaultRegistry = NewRegistry()
+}
+
 func NewRegistry() Registry {
 	return Registry{content: make(map[uint64]TupleType), hasher: NewHasher(fnv.New32a())}
 }
