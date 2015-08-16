@@ -6,6 +6,19 @@ import (
 	"io"
 )
 
+// ProtocolVersionMask is the lower 6 bits of the first byte of the ptotocol header (0b00111111)
+const ProtocolVersionMask = 63
+
+// ProtocolVersionMask is the upper 2 bits of the first byte of the ptotocol header (0b11000000)
+const ProtocolSizeEnumMask = 192
+
+// ParseProtocolHeader returns the number of bytes to read for the content length and the protocol version. The upper 2 bits represent the size enum (0-3 bits = 2**n). The lower 6 bits are the protocol version which determines how the bytes are interpreted.
+func ParseProtocolHeader(header uint8) (lenBytes uint8, version uint8) {
+	version = header & ProtocolVersionMask
+	lenBytes = 1 << ((header & ProtocolSizeEnumMask) >> 6)
+	return
+}
+
 // TupleHeader stores meta data about the tuple such as the version, the hashes and the number of fields.
 type TupleHeader struct {
 	ProtocolVersion uint8
