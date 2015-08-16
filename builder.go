@@ -2,37 +2,9 @@ package namedtuple
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
-	"hash/fnv"
-	"io"
 	"math"
 )
-
-var syncHash SynchronizedHash = NewHasher(fnv.New32a())
-
-// Empty Tuple
-var NIL Tuple = Tuple{}
-
-type TupleType struct {
-	Namespace     string // Tuple Namespace
-	Name          string // Tuple Name
-	NamespaceHash uint32
-	Hash          uint32
-	versions      [][]Field
-	fields        map[string]int
-}
-
-type Version struct {
-	Num    uint8
-	Fields []Field
-}
-
-type Field struct {
-	Name     string
-	Required bool
-	Type     FieldType
-}
 
 type TupleBuilder struct {
 	fields    map[string]Field
@@ -83,55 +55,14 @@ func (t *TupleBuilder) typeCheck(fieldName string, fieldType FieldType) error {
 
 func (b *TupleBuilder) Build() (Tuple, error) {
 	defer b.reset()
-	header, err := NewTupleHeader(*b)
+	header, err := b.newTupleHeader()
 	if err != nil {
 		return NIL, err
 	}
 	return Tuple{data: b.buffer[:b.pos], Header: header}, nil
 }
 
-func New(namespace string, name string) (t TupleType) {
-	hash := syncHash.Hash([]byte(name))
-	ns_hash := syncHash.Hash([]byte(namespace))
-	t = TupleType{namespace, name, ns_hash, hash, make([][]Field, 0), make(map[string]int)}
-	return
-}
-
-func (t *TupleType) AddVersion(fields ...Field) {
-	t.versions = append(t.versions, fields)
-	for _, field := range fields {
-		t.fields[field.Name] = len(t.fields)
-	}
-}
-
-func (t *TupleType) Contains(field string) bool {
-	_, exists := t.fields[field]
-	return exists
-}
-
-func (t *TupleType) Offset(field string) (offset int, exists bool) {
-	offset, exists = t.fields[field]
-	return
-}
-
-func (t *TupleType) NumVersions() int {
-	return len(t.versions)
-}
-
-func (t *TupleType) Versions() (vers []Version) {
-	vers = make([]Version, t.NumVersions())
-	for i := 0; i < t.NumVersions(); i++ {
-		vers[i] = Version{uint8(i + 1), t.versions[i]}
-	}
-	return
-}
-
-// type ReferenceField struct {
-// 	Field
-// 	ReferenceType string
-// }
-
-func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
+func (b *TupleBuilder) newTupleHeader() (TupleHeader, error) {
 
 	// validation of required fields
 	var tupleVersion uint8
@@ -219,82 +150,168 @@ func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
 	}, nil
 }
 
-type TupleHeader struct {
-	// protocol version  (+1) - {uint8}
-	// tuple version     (+1) - {uint8}
-	// namespace hash    (+4) - {uint32}
-	// hash code         (+4) - {uint32}
-	// field count       (+4) - {uint32}
-	// field size        (+1) - {1,2,4,8} bytes
-	//  - fields -            (field count * field size)
-	// data length       (+8) - {depends on field size (ie. same as field size)}
-	ProtocolVersion uint8
-	TupleVersion    uint8
-	NamespaceHash   uint32
-	Hash            uint32
-	FieldCount      uint32
-	FieldSize       uint8
-	ContentLength   uint64
-	Offsets         []uint64
-	Type            TupleType
+// ProtocolVersionMask is the lower 6 bits of the first byte of the ptotocol header (0b00111111)
+const ProtocolVersionMask = 63
+
+// ProtocolVersionMask is the upper 2 bits of the first byte of the ptotocol header (0b11000000)
+const ProtocolSizeEnumMask = 192
+
+// ParseProtocolHeader returns the number of bytes to read for the content length and the protocol version. The upper 2 bits represent the size enum (0-3 bits = 2**n). The lower 6 bits are the protocol version which determines how the bytes are interpreted.
+func ParseProtocolHeader(header uint8) (lenBytes uint8, version uint8) {
+	version = header & ProtocolVersionMask
+	lenBytes = 1 << ((header & ProtocolSizeEnumMask) >> 6)
+	return
 }
 
-func (t *TupleHeader) Size() int {
+// type protocolHeader []byte
 
-	// data size width is the same as the field size
-	size := 15 + int(t.FieldSize)*int(t.FieldCount) + int(t.FieldSize)
-	return size
-}
+// func (p protocolHeader) ProtocolVersion() (v uint8, err error) {
+// 	if len(p) > 0 {
+// 		v = p[0] & ProtocolVersionMask
+// 	} else {
+// 		err = xbinary.ErrOutOfRange
+// 	}
+// 	return
+// }
 
-func (t *TupleHeader) WriteTo(writer io.Writer) (int64, error) {
+// func (p protocolHeader) ContentLength() (l uint64, err error) {
+// 	var sizeEnum byte
+// 	if len(p) > 0 {
+// 		sizeEnum = p[0] & ProtocolSizeEnumMask >> 6
+// 	} else {
+// 		err = xbinary.ErrOutOfRange
+// 		return
+// 	}
 
-	if len(t.Offsets) != int(t.FieldCount) {
-		return 0, errors.New("Invalid Header: Field count does not equal number of field offsets")
-	}
-	dst := make([]byte, t.Size())
+// 	switch sizeEnum {
+// 	case 0:
+// 		if len(p) > 1 {
+// 			l = uint64(p[1])
+// 		} else {
+// 			err = xbinary.ErrOutOfRange
+// 		}
 
-	// copy([]byte("ENT"), dst)
-	dst[0] = byte(t.ProtocolVersion)
-	dst[1] = byte(t.TupleVersion)
-	binary.LittleEndian.PutUint32(dst[2:], t.NamespaceHash)
-	binary.LittleEndian.PutUint32(dst[6:], t.Hash)
-	binary.LittleEndian.PutUint32(dst[10:], t.FieldCount)
-	dst[14] = byte(t.FieldSize)
+// 	case 1:
+// 		if size, e := xbinary.LittleEndian.Uint16(p, 1); err == nil {
+// 			l = uint64(size)
+// 		} else {
+// 			err = e
+// 		}
 
-	pos := int64(15)
-	switch t.FieldSize {
-	case 1:
-		for _, offset := range t.Offsets {
-			dst[pos] = byte(offset)
-			pos++
-		}
-		dst[pos] = byte(t.ContentLength)
-	case 2:
-		for _, offset := range t.Offsets {
-			binary.LittleEndian.PutUint16(dst[pos:], uint16(offset))
-			pos += 2
-		}
-		binary.LittleEndian.PutUint16(dst[pos:], uint16(t.ContentLength))
-	case 4:
-		for _, offset := range t.Offsets {
-			binary.LittleEndian.PutUint32(dst[pos:], uint32(offset))
-			pos += 4
-		}
-		binary.LittleEndian.PutUint32(dst[pos:], uint32(t.ContentLength))
-	case 8:
-		for _, offset := range t.Offsets {
-			binary.LittleEndian.PutUint64(dst[pos:], offset)
-			pos += 8
-		}
-		binary.LittleEndian.PutUint64(dst[pos:], t.ContentLength)
-	default:
-		return pos, errors.New("Invalid Header: Field size must be 1,2,4 or 8 bytes")
-	}
-	pos += int64(t.FieldSize)
+// 	case 2:
+// 		if size, e := xbinary.LittleEndian.Uint32(p, 1); err == nil {
+// 			l = uint64(size)
+// 		} else {
+// 			err = e
+// 		}
 
-	n, err := writer.Write(dst)
-	return int64(n), err
-}
+// 	case 3:
+// 		if size, e := xbinary.LittleEndian.Uint64(p, 1); err == nil {
+// 			l = uint64(size)
+// 		} else {
+// 			err = e
+// 		}
+// 	}
+// 	return
+// }
+
+// type packetHeader []byte
+
+// func (p packetHeader) ProtocolVersion() (v uint8, err error) {
+// 	if len(p) > 0 {
+// 		v = p[0]
+// 	} else {
+// 		err = xbinary.ErrOutOfRange
+// 	}
+// 	return
+// }
+
+// func (p packetHeader) TupleVersion() (v uint8, err error) {
+// 	if len(p) > 1 {
+// 		v = p[1]
+// 	} else {
+// 		err = xbinary.ErrOutOfRange
+// 	}
+// 	return
+// }
+
+// func (p packetHeader) NamespaceHash() (uint32, error) {
+// 	return xbinary.LittleEndian.Uint32(p, 2)
+// }
+
+// func (p packetHeader) TypeHash() (uint32, error) {
+// 	return xbinary.LittleEndian.Uint32(p, 6)
+// }
+
+// func (p packetHeader) NumberOfFields() (uint32, error) {
+// 	return xbinary.LittleEndian.Uint32(p, 10)
+// }
+
+// func (p packetHeader) OffsetSize() (v uint8, err error) {
+// 	if len(p) > 15 {
+// 		v = p[15]
+// 	} else {
+// 		err = xbinary.ErrOutOfRange
+// 	}
+// 	return
+// }
+
+// func (p packetHeader) ContentLength() (l uint64, err error) {
+
+// 	// Get size of field offsets
+// 	size, e := p.OffsetSize()
+// 	if e != nil {
+// 		err = e
+// 		return
+// 	}
+
+// 	// Get number of fields
+// 	count, e := p.NumberOfFields()
+// 	if e != nil {
+// 		err = e
+// 		return
+// 	}
+// 	return xbinary.LittleEndian.Uint64(p, 16+int(size)*int(count))
+// }
+
+// func (p packetHeader) Offsets() (offsets []uint64, err error) {
+
+// 	// Get size of field offsets
+// 	size, e := p.OffsetSize()
+// 	if e != nil {
+// 		err = e
+// 		return
+// 	}
+
+// 	// Get number of fields
+// 	count, e := p.NumberOfFields()
+// 	if e != nil {
+// 		err = e
+// 		return
+// 	}
+
+// 	// Resize offsets
+// 	offsets = make([]uint64, int(count))
+
+// 	if len(p) < 16+int(size)*int(count) {
+// 		err = xbinary.ErrOutOfRange
+// 		return
+// 	}
+
+// 	// Get offsets
+// 	switch size {
+// 	case 1:
+// 		for i, o := range p[16 : 16+int(count)] {
+// 			offsets[i] = uint64(o)
+// 		}
+// 	case 2:
+// 	case 4:
+// 	case 8:
+// 	default:
+// 		err = fmt.Errorf("")
+// 	}
+// 	return
+// }
 
 type Tuple struct {
 	data   []byte
@@ -302,9 +319,34 @@ type Tuple struct {
 }
 
 func (t *Tuple) Is(tupleType TupleType) bool {
-	return t.Header.Hash == tupleType.Hash
+	return t.Header.Hash == tupleType.Hash && t.Header.NamespaceHash == tupleType.NamespaceHash
 }
 
+// Size returns the number of bytes used to store the tuple data
+func (t *Tuple) Size() int {
+	return len(t.data)
+}
+
+// Offset returns the byte offset for the given field
+func (t *Tuple) Offset(field string) (int, error) {
+	index, exists := t.Header.Type.Offset(field)
+	if !exists {
+		return 0, errors.New("Field does not exist")
+	}
+
+	// Tuple type and tuple header do not agree on fields
+	if index >= int(t.Header.FieldCount) {
+		return 0, errors.New("Invalid field index")
+	}
+	return int(t.Header.Offsets[index]), nil
+}
+
+// Payload returns the bytes representing the tuple. The tuple header is not included
+func (t *Tuple) Payload() []byte {
+	return t.data
+}
+
+// WriteAt writes the tuple into the given byte array at the given offset.
 func (t *Tuple) WriteAt(p []byte, off int64) (n int, err error) {
 
 	size := t.Header.Size()
@@ -325,40 +367,4 @@ func (t *Tuple) WriteAt(p []byte, off int64) (n int, err error) {
 	copy(p[offset:], t.data)
 
 	return
-}
-
-func (t *Tuple) WriteTo(w io.Writer) (int64, error) {
-
-	// write header
-	var wrote int
-	if wrote, err := t.Header.WriteTo(w); err != nil {
-		return wrote, nil
-	}
-
-	n, err := w.Write(t.data)
-	if err != nil {
-		return int64(n), err
-	}
-	return int64(wrote + n), nil
-}
-
-func (t *Tuple) Size() int {
-	return len(t.data)
-}
-
-func (t *Tuple) Offset(field string) (int, error) {
-	index, exists := t.Header.Type.Offset(field)
-	if !exists {
-		return 0, errors.New("Field does not exist")
-	}
-
-	// Tuple type and tuple header do not agree on fields
-	if index >= int(t.Header.FieldCount) {
-		return 0, errors.New("Invalid field index")
-	}
-	return int(t.Header.Offsets[index]), nil
-}
-
-func (t *Tuple) Payload() []byte {
-	return t.data
 }
