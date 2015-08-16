@@ -1,5 +1,80 @@
 package namedtuple
 
+import "hash/fnv"
+
+var syncHash SynchronizedHash = NewHasher(fnv.New32a())
+
+// Empty Tuple
+var NIL Tuple = Tuple{}
+
+type TupleType struct {
+	Namespace     string // Tuple Namespace
+	Name          string // Tuple Name
+	NamespaceHash uint32
+	Hash          uint32
+	versions      [][]Field
+	fields        map[string]int
+}
+
+type Version struct {
+	Num    uint8
+	Fields []Field
+}
+
+type Field struct {
+	Name     string
+	Required bool
+	Type     FieldType
+}
+
+// New creates a new TupleType with the given namespace and type name
+func New(namespace string, name string) (t TupleType) {
+	hash := syncHash.Hash([]byte(name))
+	ns_hash := syncHash.Hash([]byte(namespace))
+	t = TupleType{namespace, name, ns_hash, hash, make([][]Field, 0), make(map[string]int)}
+	return
+}
+
+// AddVersion adds a version to the tuple type
+func (t *TupleType) AddVersion(fields ...Field) {
+	t.versions = append(t.versions, fields)
+	for _, field := range fields {
+		t.fields[field.Name] = len(t.fields)
+	}
+}
+
+// Contains determines is a field exists in the TupleType
+func (t *TupleType) Contains(field string) bool {
+	_, exists := t.fields[field]
+	return exists
+}
+
+// Offset determines the numerical offset for the given field
+func (t *TupleType) Offset(field string) (offset int, exists bool) {
+	offset, exists = t.fields[field]
+	return
+}
+
+// NumVersions returns the number of version in the tuple type
+func (t *TupleType) NumVersions() int {
+	return len(t.versions)
+}
+
+// Versions returns an array of versions contained in this type
+func (t *TupleType) Versions() (vers []Version) {
+	vers = make([]Version, t.NumVersions())
+	for i := 0; i < t.NumVersions(); i++ {
+		vers[i] = Version{uint8(i + 1), t.versions[i]}
+	}
+	return
+}
+
+// Builder creates a new builder from the TupleType
+func (t *TupleType) Builder(buffer []byte) TupleBuilder {
+	return NewBuilder(*t, buffer)
+}
+
+// FieldType is the byte representation of each field type
 type FieldType uint8
 
 const (
