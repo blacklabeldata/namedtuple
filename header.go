@@ -12,7 +12,7 @@ const ProtocolVersionMask = 63
 // ProtocolVersionMask is the upper 2 bits of the first byte of the ptotocol header (0b11000000)
 const ProtocolSizeEnumMask = 192
 
-// ParseProtocolHeader returns the number of bytes to read for the content length and the protocol version. The upper 2 bits represent the size enum (0-3 bits = 2**n). The lower 6 bits are the protocol version which determines how the bytes are interpreted.
+// ParseProtocolHeader returns the number of bytes to read for the content length and the protocol version. The upper 2 bits represent the number of bytes in the content length (0-3 bits = 2**n). The lower 6 bits are the protocol version which determines how the bytes are interpreted.
 func ParseProtocolHeader(header uint8) (lenBytes uint8, version uint8) {
 	version = header & ProtocolVersionMask
 	lenBytes = 1 << ((header & ProtocolSizeEnumMask) >> 6)
@@ -60,7 +60,6 @@ func (t *TupleHeader) WriteTo(w io.Writer) (int64, error) {
 			dst[pos] = byte(offset)
 			pos++
 		}
-		dst[pos] = byte(t.ContentLength)
 	case 2:
 		// Set size enum
 		dst[0] |= 64
@@ -70,7 +69,6 @@ func (t *TupleHeader) WriteTo(w io.Writer) (int64, error) {
 			binary.LittleEndian.PutUint16(dst[pos:], uint16(offset))
 			pos += 2
 		}
-		binary.LittleEndian.PutUint16(dst[pos:], uint16(t.ContentLength))
 	case 4:
 		// Set size enum
 		dst[0] |= 128
@@ -80,7 +78,6 @@ func (t *TupleHeader) WriteTo(w io.Writer) (int64, error) {
 			binary.LittleEndian.PutUint32(dst[pos:], uint32(offset))
 			pos += 4
 		}
-		binary.LittleEndian.PutUint32(dst[pos:], uint32(t.ContentLength))
 	case 8:
 		// Set size enum
 		dst[0] |= 192
@@ -90,7 +87,6 @@ func (t *TupleHeader) WriteTo(w io.Writer) (int64, error) {
 			binary.LittleEndian.PutUint64(dst[pos:], offset)
 			pos += 8
 		}
-		binary.LittleEndian.PutUint64(dst[pos:], t.ContentLength)
 	default:
 		return pos, errors.New("Invalid Header: Field size must be 1,2,4 or 8 bytes")
 	}
