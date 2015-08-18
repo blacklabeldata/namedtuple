@@ -3,6 +3,8 @@ package namedtuple
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"io"
 	"math"
 )
 
@@ -109,6 +111,7 @@ func (b *TupleBuilder) newTupleHeader() (TupleHeader, error) {
 					offsets[fieldCount] = uint64(offset)
 				}
 			}
+			fieldCount++
 		}
 
 		// increment the version number after all required fields have been satisfied
@@ -334,24 +337,46 @@ func (t *Tuple) Payload() []byte {
 }
 
 // WriteAt writes the tuple into the given byte array at the given offset.
-func (t *Tuple) WriteAt(p []byte, off int64) (n int, err error) {
+func (t Tuple) WriteAt(p *[]byte, off int64) (n int, err error) {
 
 	size := t.Header.Size()
-	if int64(len(p))-off < int64(size+len(t.data)) {
+	if int64(len(*p))-off < int64(size+len(t.data)) {
 		return 0, errors.New("Buffer too small")
 	}
 
 	// Write header
-	buf := bytes.NewBuffer(p[off:])
+	var tmp []byte
+	buf := bytes.NewBuffer(tmp)
+	// buf := bytes.NewBuffer((*p)[off:])
 	if written, err := t.Header.WriteTo(buf); err == nil {
 		n += int(written)
 	} else {
 		return 0, err
 	}
+	buf.Write(t.data)
 
 	// Copy payload
-	var offset = int(off) + n
-	copy(p[offset:], t.data)
+
+	fmt.Println(buf.Bytes())
+	fmt.Println(t.data)
+	copy((*p)[int(off):], buf.Bytes())
+
+	// var offset = int(off) + n
+	// copy((*p)[offset:], t.data)
 
 	return
+}
+
+func (t Tuple) WriteTo(w io.Writer) (n int, err error) {
+	// write header
+	wrote, err := t.Header.WriteTo(w)
+	if err != nil {
+		return int(wrote), nil
+	}
+
+	n, err = w.Write(t.data)
+	if err != nil {
+		return int(n), err
+	}
+	return int(wrote) + n, nil
 }

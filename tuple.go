@@ -1,11 +1,27 @@
 package namedtuple
 
 import (
-	"fmt"
+	"bytes"
 	"math"
 
 	"github.com/swiftkick-io/xbinary"
 )
+
+func (b *TupleBuilder) writeTuple(value Tuple, offset, size int) (wrote int, err error) {
+
+	// write tuple
+	var tmpBuffer []byte
+	tmp := bytes.NewBuffer(tmpBuffer)
+	n, err := value.WriteTo(tmp)
+	if err != nil {
+		return wrote, err
+	}
+
+	// Write tmp to buffer
+	copy(b.buffer[offset:], tmp.Bytes()[:size])
+	wrote += int(n)
+	return
+}
 
 // PutTuple writes a tuple into the given field. The field type must be a TupleField, otherwise an error will be returned. The type code is written first, then the length, then the value. If the tuple length is less than `math.MaxUint8`, a single byte is used to represent the length. If the tuple length is less than `math.MaxUint16`, an unsigned 16-bit integer is used to represent the length and so on as the length increases. If the buffer is not large enough to store the entire tuple an `xbinary.ErrOutOfRange` error is returned. If the write is successful, the number of bytes written is returned as well as a nil error.
 func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error) {
@@ -15,7 +31,7 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 		return 0, err
 	}
 
-	size := value.Size()
+	size := value.Size() + value.Header.Size()
 	if size < math.MaxUint8 {
 
 		// check length
@@ -30,8 +46,8 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 		b.buffer[b.pos+1] = byte(size)
 		wrote += 2
 
-		// write tuple
-		n, err := value.WriteAt(b.buffer, int64(b.pos+2))
+		// Write tuple
+		n, err := b.writeTuple(value, b.pos+wrote, size)
 		wrote += int(n)
 
 		// Return err
@@ -54,7 +70,8 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 		wrote += 3
 
 		// write tuple
-		n, err := value.WriteAt(b.buffer, int64(b.pos+3))
+		n, err := b.writeTuple(value, b.pos+wrote, size)
+		// n, err := value.WriteAt(&b.buffer, int64(b.pos+3))
 		wrote += int(n)
 
 		// Return err
@@ -77,7 +94,8 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 		wrote += 5
 
 		// write tuple
-		n, err := value.WriteAt(b.buffer, int64(b.pos+5))
+		n, err := b.writeTuple(value, b.pos+wrote, size)
+		// n, err := value.WriteAt(&b.buffer, int64(b.pos+5))
 		wrote += int(n)
 
 		// Return err
@@ -100,7 +118,8 @@ func (b *TupleBuilder) PutTuple(field string, value Tuple) (wrote int, err error
 		wrote += 9
 
 		// write tuple
-		n, err := value.WriteAt(b.buffer, int64(b.pos+9))
+		n, err := b.writeTuple(value, b.pos+wrote, size)
+		// n, err := value.WriteAt(&b.buffer, int64(b.pos+9))
 		wrote += int(n)
 
 		// Return err
@@ -165,7 +184,7 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 	// write array values
 	for _, tuple := range value {
 
-		size := tuple.Size()
+		size := tuple.Size() + tuple.Header.Size()
 		if size < math.MaxUint8 {
 
 			// check length
@@ -173,8 +192,12 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 				return wrote, xbinary.ErrOutOfRange
 			}
 
-			// write length
-			tuple.WriteAt(b.buffer, int64(b.pos+2+wrote))
+			// write tuple
+			if _, err := b.writeTuple(tuple, b.pos+wrote+2, size); err != nil {
+				return wrote, err
+			}
+
+			// tuple.WriteAt(&b.buffer, int64(b.pos+2+wrote))
 
 			// write type code
 			b.buffer[b.pos+wrote] = byte(TupleArray8Code.OpCode)
@@ -195,11 +218,8 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 			// write type code
 			b.buffer[b.pos+wrote] = byte(TimestampArray16Code.OpCode)
 
-			// write value
-			if written, err := tuple.WriteAt(b.buffer, int64(b.pos+3+wrote)); err != nil {
-				return 3 + written + wrote, err
-			} else if written != size {
-				err = fmt.Errorf("Incorrect tuple length: expected %d, actual %d", size, written)
+			// write tuple
+			if _, err := b.writeTuple(tuple, b.pos+wrote+3, size); err != nil {
 				return wrote, err
 			}
 
@@ -211,16 +231,13 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 				return wrote, xbinary.ErrOutOfRange
 			}
 
-			// write length
-			xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1+wrote, uint32(size))
-
-			// write value
-			if written, err := tuple.WriteAt(b.buffer, int64(b.pos+5+wrote)); err != nil {
-				return 5 + written + wrote, err
-			} else if written != size {
-				err = fmt.Errorf("Incorrect tuple length: expected %d, actual %d", size, written)
+			// write tuple
+			if _, err := b.writeTuple(tuple, b.pos+wrote+5, size); err != nil {
 				return wrote, err
 			}
+
+			// write length
+			xbinary.LittleEndian.PutUint32(b.buffer, b.pos+1+wrote, uint32(size))
 
 			// write type code
 			b.buffer[b.pos+wrote] = byte(TimestampArray32Code.OpCode)
@@ -228,16 +245,13 @@ func (b *TupleBuilder) PutTupleArray(field string, value []Tuple) (wrote int, er
 			wrote += 5 + size
 		} else {
 
-			// write length
-			xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1+wrote, uint64(size))
-
-			// write value
-			if written, err := tuple.WriteAt(b.buffer, int64(b.pos+9+wrote)); err != nil {
-				return 9 + written + wrote, err
-			} else if written != size {
-				err = fmt.Errorf("Incorrect tuple length: expected %d, actual %d", size, written)
+			// write tuple
+			if _, err := b.writeTuple(tuple, b.pos+wrote+9, size); err != nil {
 				return wrote, err
 			}
+
+			// write length
+			xbinary.LittleEndian.PutUint64(b.buffer, b.pos+1+wrote, uint64(size))
 
 			// write type code
 			b.buffer[b.pos+wrote] = byte(TimestampArray64Code.OpCode)
