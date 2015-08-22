@@ -49,9 +49,9 @@ func TestEncode(t *testing.T) {
 	locBuilder.PutFloat32("alt", 9022)
 	loc, err := locBuilder.Build()
 	assert.Nil(t, err, "Error should be nil")
-	t.Logf("Tuple : %#v", loc)
-	t.Logf("Tuple Size : %d", loc.Size())
-	t.Logf("Tuple Header Size : %d", loc.Header.Size())
+	// t.Logf("Tuple : %#v", loc)
+	// t.Logf("Tuple Size : %d", loc.Size())
+	// t.Logf("Tuple Header Size : %d", loc.Header.Size())
 
 	msgBuilder := Message.Builder(msgBuffer)
 	msgBuilder.PutString("payload", "Vacation in Miami, FL")
@@ -62,13 +62,13 @@ func TestEncode(t *testing.T) {
 	msg, err := msgBuilder.Build()
 	assert.Nil(t, err, "Error should be nil")
 
-	t.Logf("Tuple : %#v", msg)
-	t.Logf("Tuple Size : %d", msg.Size())
-	t.Logf("Tuple Header Size : %d", msg.Header.Size())
+	// t.Logf("Tuple : %#v", msg)
+	// t.Logf("Tuple Size : %d", msg.Size())
+	// t.Logf("Tuple Header Size : %d", msg.Header.Size())
 
 	err = encoder.Encode(msg)
 	assert.Nil(t, err, "Error should be nil")
 
-	b := out.Bytes()
-	t.Logf("Output: %d", len(b), b)
+	// b := out.Bytes()
+	// t.Logf("Output: %d", len(b), b)
 }

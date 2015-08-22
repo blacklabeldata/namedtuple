@@ -2,7 +2,7 @@ package namedtuple
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"math"
 
@@ -11,7 +11,7 @@ import (
 
 var (
 	// ErrInvalidFieldSize is retured by an encoder if the the field size is invalid
-	ErrInvalidFieldSize = fmt.Errorf("Invalid Field Size: field size must be 1,2,4 or 8 bytes")
+	ErrInvalidFieldSize = errors.New("Invalid Field Size: field size must be 1,2,4 or 8 bytes")
 )
 
 // Encoder encodes tuples normally into a given io.Writer.
@@ -39,7 +39,8 @@ func (e versionOneEncoder) Encode(t Tuple) error {
 	}
 
 	// Write protocol header to underlying writer
-	if err := e.writeProtocolHeader(); err != nil {
+	size := e.buffer.Len()
+	if err := e.writeProtocolHeader(size); err != nil {
 		return err
 	}
 
@@ -48,8 +49,7 @@ func (e versionOneEncoder) Encode(t Tuple) error {
 	return err
 }
 
-func (e versionOneEncoder) writeProtocolHeader() (err error) {
-	size := e.buffer.Len()
+func (e versionOneEncoder) writeProtocolHeader(size int) (err error) {
 
 	// Set protocol version to 1
 	e.protocolHeader[0] = 1

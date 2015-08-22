@@ -3,9 +3,7 @@ package namedtuple
 import (
 	"bufio"
 	"bytes"
-	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/swiftkick-io/xbinary"
@@ -14,22 +12,31 @@ import (
 var (
 	// ErrTupleExceedsMaxSize is returned if the length of a Tuple of greater than the maximum allowable size
 	// for the Decoder.
-	ErrTupleExceedsMaxSize = fmt.Errorf("Tuple exceeds maximum allowable length")
+	ErrTupleExceedsMaxSize = errors.New("Tuple exceeds maximum allowable length")
 
 	// ErrInvalidProtocolVersion is returned from Decode() if the Tuple version is unknown.
-	ErrInvalidProtocolVersion = fmt.Errorf("Invalid protocol version in Tuple header")
+	ErrInvalidProtocolVersion = errors.New("Invalid protocol version in Tuple header")
 
 	// ErrTupleLengthTooSmall is returned from the Decode() method if the decoded length is too small to include all the required information
-	ErrTupleLengthTooSmall = fmt.Errorf("Tuple length is too short to include all the required information")
+	ErrTupleLengthTooSmall = errors.New("Tuple length is too short to include all the required information")
 
-	ErrUnknownTupleType = fmt.Errorf("Unknown tuple type")
+	// ErrUnknownTupleType is returned when the Tuple being decoded is of an unknown type.
+	ErrUnknownTupleType = errors.New("Unknown tuple type")
+
+	// ErrInvalidLength is returned if the byte count for the length is not 1, 2, 4 or 8.
+	ErrInvalidLength = errors.New("Invalid Tuple Size: tuple length must be encoded as 1,2,4 or 8 bytes")
 
 	// EmptyTuple is returned along with an error from the Decode() method.
 	EmptyTuple = Tuple{}
 )
 
 const (
+
+	// VersionOneTupleHeaderSize is the size of the header for version one.
 	VersionOneTupleHeaderSize = 13
+
+	// DefaultMaxSize is the default maximum size of a tuple being decoded.
+	DefaultMaxSize uint64 = 4096
 )
 
 // Create a reader which reads the first byte and the content length.
@@ -41,11 +48,19 @@ const (
 // for _, tup, err := decoder.Decode(reader); err != nil {
 // }
 
+// Decoder decodes data into a Tuple or an error.
 type Decoder interface {
 	Decode() (Tuple, error)
 }
 
-func NewDecoder(reg Registry, maxSize uint64, r io.Reader) Decoder {
+// NewDecoder creates a new Decoder using a type Registry and an io.Reader.
+func NewDecoder(reg Registry, r io.Reader) Decoder {
+	var buf []byte
+	return decoder{reg, DefaultMaxSize, bytes.NewBuffer(buf), bufio.NewReader(r)}
+}
+
+// NewDecoderSize creates a new Decoder using a type Registry, a max size and an io.Reader.
+func NewDecoderSize(reg Registry, maxSize uint64, r io.Reader) Decoder {
 	var buf []byte
 	return decoder{reg, maxSize, bytes.NewBuffer(buf), bufio.NewReader(r)}
 }
@@ -59,6 +74,7 @@ type decoder struct {
 
 func (d decoder) Decode() (Tuple, error) {
 
+	// Reads the protocol header
 	pH, err := d.reader.ReadByte()
 	if err != nil {
 		return EmptyTuple, err
@@ -68,14 +84,19 @@ func (d decoder) Decode() (Tuple, error) {
 	byteCount, version := ParseProtocolHeader(pH)
 
 	// Read bytes for content length
-	b, err := d.reader.Peek(int(byteCount))
+	b := make([]byte, byteCount)
+	n, err := d.reader.Read(b)
 	if err != nil {
 		return EmptyTuple, err
+	} else if n != int(byteCount) {
+		return EmptyTuple, io.ErrUnexpectedEOF
 	}
 
 	// Parse content length based on number of bytes
 	length, err := d.parseLength(byteCount, b)
 	if err != nil {
+		// This should not happen as the
+		// Read call above also checks for length.
 		return EmptyTuple, err
 	}
 
@@ -91,13 +112,11 @@ func (d decoder) Decode() (Tuple, error) {
 
 	// Depending on the protocol version, parse the tuple
 	switch version {
-	case 0:
+	case 1:
 		return d.parseVersionOneTuple(byteCount, version, length)
 	default:
 		return EmptyTuple, ErrInvalidProtocolVersion
 	}
-
-	return EmptyTuple, nil
 }
 
 func (d decoder) parseLength(byteCount uint8, buf []byte) (l uint64, err error) {
@@ -109,28 +128,31 @@ func (d decoder) parseLength(byteCount uint8, buf []byte) (l uint64, err error) 
 			err = xbinary.ErrOutOfRange
 		}
 	case 2:
-		if size, e := xbinary.LittleEndian.Uint16(buf, 0); err == nil {
+		if size, e := xbinary.LittleEndian.Uint16(buf, 0); e == nil {
 			l = uint64(size)
 		} else {
 			err = e
 		}
 	case 4:
-		if size, e := xbinary.LittleEndian.Uint32(buf, 0); err == nil {
+		if size, e := xbinary.LittleEndian.Uint32(buf, 0); e == nil {
 			l = uint64(size)
 		} else {
 			err = e
 		}
 	case 8:
-		if size, e := xbinary.LittleEndian.Uint64(buf, 0); err == nil {
+		if size, e := xbinary.LittleEndian.Uint64(buf, 0); e == nil {
 			l = uint64(size)
 		} else {
 			err = e
 		}
+	default:
+		// This should never happen
+		err = ErrInvalidLength
 	}
 	return
 }
 
-func (d decoder) parseVersionOneTuple(offsetBytes uint8, protocolVersion uint8, length uint64) (t Tuple, err error) {
+func (d decoder) parseVersionOneTuple(offsetSize uint8, protocolVersion uint8, length uint64) (t Tuple, err error) {
 	buffer := d.buffer.Bytes()
 	var namespaceHash, typeHash, fieldCount uint32
 	var version uint8
@@ -146,38 +168,69 @@ func (d decoder) parseVersionOneTuple(offsetBytes uint8, protocolVersion uint8, 
 	// Read namespace hash
 	namespaceHash, err = xbinary.LittleEndian.Uint32(buffer, 1)
 	if err != nil {
+		// Should not occur as buffer length has already been validated
 		return EmptyTuple, err
 	}
 
 	// Read type hash
 	typeHash, err = xbinary.LittleEndian.Uint32(buffer, 5)
 	if err != nil {
+		// Should not occur as buffer length has already been validated
 		return EmptyTuple, err
 	}
 
 	// Check if known tuple type
 	tupleType, exists := d.reg.GetWithHash(namespaceHash, typeHash)
 	if !exists {
-		return EmptyTuple, err
+		return EmptyTuple, ErrUnknownTupleType
 	}
 
 	// Read field count
 	fieldCount, err = xbinary.LittleEndian.Uint32(buffer, 9)
 	if err != nil {
+		// Should not occur as buffer length has already been validated
 		return EmptyTuple, err
 	}
 
+	// Read field offsets
+	offsets, err := readFieldOffsets(offsetSize, fieldCount, buffer)
+	if err != nil {
+		return EmptyTuple, err
+	}
+
+	// Slice tuple data
+	pos := VersionOneTupleHeaderSize + int(fieldCount)*int(offsetSize)
+	t.data = buffer[pos:]
+
+	// Create TupleHeader
+	t.Header = TupleHeader{
+		ProtocolVersion: protocolVersion,
+		TupleVersion:    version,
+		NamespaceHash:   namespaceHash,
+		Hash:            typeHash,
+		FieldCount:      fieldCount,
+		FieldSize:       offsetSize,
+		ContentLength:   uint64(len(t.data)),
+		Offsets:         offsets,
+		Type:            tupleType,
+	}
+	return
+}
+
+func readFieldOffsets(byteCount uint8, fieldCount uint32, buffer []byte) ([]uint64, error) {
 	offsets := make([]uint64, int(fieldCount))
-	switch offsetBytes {
+	var err error
+	switch byteCount {
 	case 1:
 		// Check buffer length
 		if len(buffer) < int(fieldCount)+VersionOneTupleHeaderSize {
-			return EmptyTuple, ErrTupleLengthTooSmall
-		}
+			err = ErrTupleLengthTooSmall
+		} else {
 
-		// Process offsets
-		for i := VersionOneTupleHeaderSize; i < int(fieldCount)+VersionOneTupleHeaderSize; i++ {
-			offsets[i-VersionOneTupleHeaderSize] = uint64(buffer[i])
+			// Process offsets
+			for i := VersionOneTupleHeaderSize; i < int(fieldCount)+VersionOneTupleHeaderSize; i++ {
+				offsets[i-VersionOneTupleHeaderSize] = uint64(buffer[i])
+			}
 		}
 	case 2:
 		o := make([]uint16, int(fieldCount))
@@ -203,106 +256,8 @@ func (d decoder) parseVersionOneTuple(offsetBytes uint8, protocolVersion uint8, 
 				offsets[i] = uint64(offset)
 			}
 		}
-	}
-
-	// Create TupleHeader
-	t.Header = TupleHeader{
-		ProtocolVersion: protocolVersion,
-		TupleVersion:    version,
-		NamespaceHash:   namespaceHash,
-		Hash:            typeHash,
-		FieldCount:      fieldCount,
-		FieldSize:       offsetBytes,
-		ContentLength:   length,
-		Offsets:         offsets,
-		Type:            tupleType,
-	}
-
-	// Slice tuple data
-	pos := VersionOneTupleHeaderSize + int(fieldCount)*int(offsetBytes)
-	t.data = buffer[pos:]
-	return
-}
-
-// skip proto version  (+1) - {uint8}
-// skip tuple version  (+1) - {uint8}
-// skip namespace code (+4) - {uint32}
-// skip hash code      (+4) - {uint32}
-// skip field count    (+4) - {uint32}
-// skip field size     (+1) - {1,2,4,8} bytes
-//  - fields -         (field count * field size)
-// skip data length    (+8) - {depends on field size (ie. same as field size)}
-//
-func Decode(r Registry, data []byte) (Tuple, error) {
-
-	// fail fast - minimum fixed header size is 14
-	if len(data) < 15 {
-		return NIL, errors.New("Invalid Header: Too small")
-	}
-
-	header := TupleHeader{}
-	header.ProtocolVersion = uint8(data[0])
-	header.TupleVersion = uint8(data[1])
-	header.NamespaceHash = binary.LittleEndian.Uint32(data[2:])
-	header.Hash = binary.LittleEndian.Uint32(data[6:])
-
-	// attach tuple type
-	// var tupleType TupleType
-	tupleType, exists := r.GetWithHash(header.NamespaceHash, header.Hash)
-	if !exists {
-		return NIL, errors.New("Unknown tuple type")
-	}
-	header.Type = tupleType
-
-	// fields
-	header.FieldCount = binary.LittleEndian.Uint32(data[10:])
-	header.FieldSize = uint8(data[14])
-
-	// now we know how large the full header is with field offsets and data length
-	fullHeaderSize := 15 + int(header.FieldCount)*int(header.FieldSize) + int(header.FieldSize)
-	if len(data) < fullHeaderSize {
-		return NIL, errors.New("Invalid Header: Too small")
-	}
-
-	// current position
-	pos := 15
-
-	// decoding field offsets
-	header.Offsets = make([]uint64, header.FieldCount)
-	switch header.FieldSize {
-	case 1:
-
-		for i := 0; i < int(header.FieldCount); i++ {
-			header.Offsets[i] = uint64(data[pos])
-			pos++
-		}
-		header.ContentLength = uint64(data[pos])
-	case 2:
-		for i := 0; i < int(header.FieldCount); i++ {
-			header.Offsets[i] = uint64(binary.LittleEndian.Uint16(data[pos:]))
-			pos += 2
-		}
-		header.ContentLength = uint64(binary.LittleEndian.Uint16(data[pos:]))
-	case 4:
-		for i := 0; i < int(header.FieldCount); i++ {
-			header.Offsets[i] = uint64(binary.LittleEndian.Uint32(data[pos:]))
-			pos += 4
-		}
-		header.ContentLength = uint64(binary.LittleEndian.Uint32(data[pos:]))
-	case 8:
-		for i := 0; i < int(header.FieldCount); i++ {
-			header.Offsets[i] = uint64(binary.LittleEndian.Uint64(data[pos:]))
-			pos += 8
-		}
-		header.ContentLength = uint64(binary.LittleEndian.Uint64(data[pos:]))
 	default:
-		return NIL, errors.New("Invalid field length")
+		err = ErrInvalidLength
 	}
-
-	pos += int(header.FieldSize)
-	if int(header.ContentLength) != (len(data) - pos) {
-		return NIL, errors.New("Invalid header: incorrect content length")
-	}
-
-	return Tuple{data: data[pos:], Header: header}, nil
+	return offsets, err
 }
