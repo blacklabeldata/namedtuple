@@ -2,10 +2,75 @@ package namedtuple
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"math"
 
 	"github.com/swiftkick-io/xbinary"
 )
+
+var (
+
+	// ErrFieldDoesNotExist is returned when Tuple.Offset is called
+	// with an unknown field name.
+	ErrFieldDoesNotExist = errors.New("Field does not exist")
+
+	// ErrInvalidFieldIndex is returned when the field offset
+	// is greater than the number of fields.
+	ErrInvalidFieldIndex = errors.New("Invalid field index")
+)
+
+// Tuple is the data representation used by the encoder and decoder.
+type Tuple struct {
+	data   []byte
+	Header TupleHeader
+}
+
+// Is determines if a tuple is a certain type.
+func (t *Tuple) Is(tupleType TupleType) bool {
+	return t.Header.Hash == tupleType.Hash && t.Header.NamespaceHash == tupleType.NamespaceHash
+}
+
+// Size returns the number of bytes used to store the tuple data
+func (t *Tuple) Size() int {
+	return len(t.data)
+}
+
+// Offset returns the byte offset for the given field
+func (t *Tuple) Offset(field string) (int, error) {
+	index, exists := t.Header.Type.Offset(field)
+	if !exists {
+		return 0, ErrFieldDoesNotExist
+	}
+
+	// Tuple type and tuple header do not agree on fields
+	if index < 0 || index >= int(t.Header.FieldCount) {
+		return 0, ErrInvalidFieldIndex
+	}
+	return int(t.Header.Offsets[index]), nil
+}
+
+// Payload returns the bytes representing the tuple. The tuple
+// header is not included.
+func (t *Tuple) Payload() []byte {
+	return t.data
+}
+
+// WriteTo sends the binary representation of the Tuple to
+// the given io.Writer.
+func (t Tuple) WriteTo(w io.Writer) (n int, err error) {
+	// write header
+	wrote, err := t.Header.WriteTo(w)
+	if err != nil {
+		return int(wrote), nil
+	}
+
+	n, err = w.Write(t.data)
+	if err != nil {
+		return int(n), err
+	}
+	return int(wrote) + n, nil
+}
 
 func (b *TupleBuilder) writeTuple(value Tuple, offset, size int) (wrote int, err error) {
 
