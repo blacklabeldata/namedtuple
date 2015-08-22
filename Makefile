@@ -12,6 +12,11 @@ benchmark:
 	@echo "------------------"
 	@go test -test.bench="^Bench*"
 
+coverage: test
+	@echo "------------------"
+	@echo " coverage report"
+	@echo "------------------"
+	@go tool cover -html=coverage.out -o coverage.html
 
 html:
 	@echo "------------------"
