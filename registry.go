@@ -5,6 +5,12 @@ import (
 	"sync"
 )
 
+var DefaultRegistry Registry
+
+func init() {
+	DefaultRegistry = NewRegistry()
+}
+
 func NewRegistry() Registry {
 	return Registry{content: make(map[uint64]TupleType), hasher: NewHasher(fnv.New32a())}
 }
@@ -84,7 +90,7 @@ func (r *Registry) typeSignature(namespace, typename string) (hash uint64) {
 func (r *Registry) typeSignatureHash(nhash, thash uint32) (hash uint64) {
 
 	// Combine hashes
-	hash = uint64(thash) << 32
-	hash |= uint64(nhash)
+	hash = uint64(nhash) << 32
+	hash |= uint64(thash)
 	return
 }

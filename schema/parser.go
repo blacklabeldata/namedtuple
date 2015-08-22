@@ -430,6 +430,15 @@ func (p *parser) parseField(pkg *Package, ver *Version) (err error) {
         }
     }
 
+    // eval previous package types
+    for _, typ := range pkg.Types {
+        if typ.Name == typeName {
+            found = true
+            field.Type = typeName
+            break
+        }
+    }
+
     // If type has still not been found, return error
     if !found {
         return SyntaxError{"unknown type '" + typeName + "'"}

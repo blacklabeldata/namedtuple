@@ -66,7 +66,7 @@ var TypeNames = []string{"string", "byte",
 	"uint32", "int32",
 	"uint64", "int64",
 	"float32", "float64", "timestamp",
-	"tuple", "any",
+	"tuple", "int", "float", "bool",
 }
 
 // Token struct

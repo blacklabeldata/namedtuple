@@ -112,8 +112,12 @@ func TestBuild(t *testing.T) {
 	builder.PutUint8("age", 25)
 
 	// tuple
-	// user := builder.Build()
+	user, err := builder.Build()
+	assert.Nil(t, err)
+	assert.NotNil(t, user)
 
+	// check data length
+	assert.Equal(t, 7+7+2, len(user.data), "Length of user tuple")
 }
 
 func TestTupleTypeNew(t *testing.T) {

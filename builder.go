@@ -1,38 +1,9 @@
 package namedtuple
 
 import (
-	"encoding/binary"
 	"errors"
-	"hash/fnv"
 	"math"
-
-	"github.com/swiftkick-io/xbinary"
 )
-
-var syncHash SynchronizedHash = NewHasher(fnv.New32a())
-
-// Empty Tuple
-var NIL Tuple = Tuple{}
-
-type TupleType struct {
-	Namespace     string // Tuple Namespace
-	Name          string // Tuple Name
-	NamespaceHash uint32
-	Hash          uint32
-	versions      [][]Field
-	fields        map[string]int
-}
-
-type Version struct {
-	Num    uint8
-	Fields []Field
-}
-
-type Field struct {
-	Name     string
-	Required bool
-	Type     FieldType
-}
 
 type TupleBuilder struct {
 	fields    map[string]Field
@@ -77,68 +48,20 @@ func (t *TupleBuilder) typeCheck(fieldName string, fieldType FieldType) error {
 	if field.Type != fieldType {
 		return errors.New("Incorrect field type: " + fieldName)
 	}
+
 	return nil
 }
 
-// func (b *TupleBuilder) PutStringArray(field string, value []string) (wrote int, err error) {
-// 	return 0, nil
-// 	// wrote, err = xbinary.LittleEndian.PutStringArray(b.buffer, b.pos, value)
-// 	// b.offsets[field] = b.pos
-// 	// b.pos += wrote
-// 	// return
-// }
-
 func (b *TupleBuilder) Build() (Tuple, error) {
 	defer b.reset()
-	header, err := NewTupleHeader(*b)
+	header, err := b.newTupleHeader()
 	if err != nil {
 		return NIL, err
 	}
 	return Tuple{data: b.buffer[:b.pos], Header: header}, nil
 }
 
-func New(namespace string, name string) (t TupleType) {
-	hash := syncHash.Hash([]byte(name))
-	ns_hash := syncHash.Hash([]byte(namespace))
-	t = TupleType{namespace, name, ns_hash, hash, make([][]Field, 0), make(map[string]int)}
-	return
-}
-
-func (t *TupleType) AddVersion(fields ...Field) {
-	t.versions = append(t.versions, fields)
-	for _, field := range fields {
-		t.fields[field.Name] = len(t.fields)
-	}
-}
-
-func (t *TupleType) Contains(field string) bool {
-	_, exists := t.fields[field]
-	return exists
-}
-
-func (t *TupleType) Offset(field string) (offset int, exists bool) {
-	offset, exists = t.fields[field]
-	return
-}
-
-func (t *TupleType) NumVersions() int {
-	return len(t.versions)
-}
-
-func (t *TupleType) Versions() (vers []Version) {
-	vers = make([]Version, t.NumVersions())
-	for i := 0; i < t.NumVersions(); i++ {
-		vers[i] = Version{uint8(i + 1), t.versions[i]}
-	}
-	return
-}
-
-// type ReferenceField struct {
-// 	Field
-// 	ReferenceType string
-// }
-
-func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
+func (b *TupleBuilder) newTupleHeader() (TupleHeader, error) {
 
 	// validation of required fields
 	var tupleVersion uint8
@@ -185,6 +108,7 @@ func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
 					offsets[fieldCount] = uint64(offset)
 				}
 			}
+			fieldCount++
 		}
 
 		// increment the version number after all required fields have been satisfied
@@ -214,7 +138,7 @@ func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
 	}
 
 	return TupleHeader{
-		ProtocolVersion: 0,
+		ProtocolVersion: 1,
 		TupleVersion:    tupleVersion,
 		NamespaceHash:   b.tupleType.NamespaceHash,
 		Hash:            b.tupleType.Hash,
@@ -224,121 +148,4 @@ func NewTupleHeader(b TupleBuilder) (TupleHeader, error) {
 		Offsets:         offsets,
 		Type:            b.tupleType,
 	}, nil
-}
-
-type TupleHeader struct {
-	// protocol version  (+1) - {uint8}
-	// tuple version     (+1) - {uint8}
-	// namespace hash    (+4) - {uint32}
-	// hash code         (+4) - {uint32}
-	// field count       (+4) - {uint32}
-	// field size        (+1) - {1,2,4,8} bytes
-	//  - fields -            (field count * field size)
-	// data length       (+8) - {depends on field size (ie. same as field size)}
-	ProtocolVersion uint8
-	TupleVersion    uint8
-	NamespaceHash   uint32
-	Hash            uint32
-	FieldCount      uint32
-	FieldSize       uint8
-	ContentLength   uint64
-	Offsets         []uint64
-	Type            TupleType
-}
-
-func (t *TupleHeader) Size() int {
-
-	// data size width is the same as the field size
-	size := 15 + int(t.FieldSize)*int(t.FieldCount) + int(t.FieldSize)
-	return size
-}
-
-func (t *TupleHeader) Write(dst []byte) (int, error) {
-
-	if len(dst) < t.Size() {
-		return 0, xbinary.ErrOutOfRange
-	} else if len(t.Offsets) != int(t.FieldCount) {
-		return 0, errors.New("Invalid Header: Field count does not equal number of field offsets")
-	}
-
-	// copy([]byte("ENT"), dst)
-	dst[0] = byte(t.ProtocolVersion)
-	dst[1] = byte(t.TupleVersion)
-	binary.LittleEndian.PutUint32(dst[2:], t.NamespaceHash)
-	binary.LittleEndian.PutUint32(dst[6:], t.Hash)
-	binary.LittleEndian.PutUint32(dst[10:], t.FieldCount)
-	dst[14] = byte(t.FieldSize)
-
-	pos := 15
-	switch t.FieldSize {
-	case 1:
-		for _, offset := range t.Offsets {
-			dst[pos] = byte(offset)
-			pos++
-		}
-		dst[pos] = byte(t.ContentLength)
-	case 2:
-		for _, offset := range t.Offsets {
-			binary.LittleEndian.PutUint16(dst[pos:], uint16(offset))
-			pos += 2
-		}
-		binary.LittleEndian.PutUint16(dst[pos:], uint16(t.ContentLength))
-	case 4:
-		for _, offset := range t.Offsets {
-			binary.LittleEndian.PutUint32(dst[pos:], uint32(offset))
-			pos += 4
-		}
-		binary.LittleEndian.PutUint32(dst[pos:], uint32(t.ContentLength))
-	case 8:
-		for _, offset := range t.Offsets {
-			binary.LittleEndian.PutUint64(dst[pos:], offset)
-			pos += 8
-		}
-		binary.LittleEndian.PutUint64(dst[pos:], t.ContentLength)
-	default:
-		return pos, errors.New("Invalid Header: Field size must be 1,2,4 or 8 bytes")
-	}
-	pos += int(t.FieldSize)
-	return pos, nil
-}
-
-type Tuple struct {
-	data   []byte
-	Header TupleHeader
-}
-
-func (t *Tuple) Is(tupleType TupleType) bool {
-	return t.Header.Hash == tupleType.Hash
-}
-
-func (t *Tuple) Write(data []byte) (int, error) {
-	if (t.Size() + t.Header.Size()) > len(data) {
-		return 0, xbinary.ErrOutOfRange
-	}
-
-	// write header
-	var wrote int
-	if wrote, err := t.Header.Write(data); err != nil {
-		return wrote, nil
-	}
-
-	wrote += copy(data[wrote:], t.data)
-	return wrote, nil
-}
-
-func (t *Tuple) Size() int {
-	return len(t.data)
-}
-
-func (t *Tuple) Offset(field string) (int, error) {
-	index, exists := t.Header.Type.Offset(field)
-	if !exists {
-		return 0, errors.New("Field does not exist")
-	}
-
-	// Tuple type and tuple header do not agree on fields
-	if index >= int(t.Header.FieldCount) {
-		return 0, errors.New("Invalid field index")
-	}
-	return int(t.Header.Offsets[index]), nil
 }

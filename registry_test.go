@@ -159,3 +159,35 @@ func TestRegistryGetFalse(t *testing.T) {
 	assert.Equal(t, TupleType{}, tupleType)
 	assert.Equal(t, false, exists)
 }
+
+func TestRegistryGetWithHash(t *testing.T) {
+
+	// create new empty registry
+	reg := NewRegistry()
+
+	// create type
+	User := createTestTupleType()
+	reg.Register(User)
+
+	// make sure the registry contains the same User type
+	tupleType, exists := reg.GetWithHash(User.NamespaceHash, User.Hash)
+	assert.Equal(t, User, tupleType)
+	assert.Equal(t, true, exists)
+}
+
+func TestRegistryGetWithHashFalse(t *testing.T) {
+
+	// create new empty registry
+	reg := NewRegistry()
+
+	// create type
+	User := createTestTupleType()
+
+	// DO NOT add User type
+	// reg.Register(User)
+
+	// make sure the registry contains the same User type
+	tupleType, exists := reg.GetWithHash(User.NamespaceHash, User.Hash)
+	assert.Equal(t, TupleType{}, tupleType)
+	assert.Equal(t, false, exists)
+}
