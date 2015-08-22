@@ -78,8 +78,8 @@ func TestParse(t *testing.T) {
     assert.Equal(t, pkg.Types[0].Versions[1].Fields[0].Type, "Location")
     assert.Equal(t, pkg.Types[0].Versions[1].Fields[0].Name, "location")
 
-    t.Logf("%#v\n", pkg)
-    t.Log(err)
+    // t.Logf("%#v\n", pkg)
+    // t.Log(err)
 }
 
 func TestLoadDirectory(t *testing.T) {
