@@ -141,7 +141,7 @@ func (b *TupleBuilder) newTupleHeader() (TupleHeader, error) {
 	}
 
 	return TupleHeader{
-		ProtocolVersion: 0,
+		ProtocolVersion: 1,
 		TupleVersion:    tupleVersion,
 		NamespaceHash:   b.tupleType.NamespaceHash,
 		Hash:            b.tupleType.Hash,
