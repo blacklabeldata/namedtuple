@@ -116,8 +116,9 @@ type TypeCode struct {
 
 // Field Type constants
 var (
-	NilCode                  = TypeCode{1, 0}
-	BooleanCode              = TypeCode{2, 0}
+	NilCode                  = TypeCode{0, 0}
+	TrueCode                 = TypeCode{1, 0}
+	FalseCode                = TypeCode{2, 0}
 	BooleanArray8Code        = TypeCode{3, 1}
 	BooleanArray16Code       = TypeCode{4, 2}
 	BooleanArray32Code       = TypeCode{5, 4}
@@ -211,8 +212,9 @@ var (
 )
 
 var fieldTypes = map[byte]TypeCode{
-	1:  NilCode,
-	2:  BooleanCode,
+	0:  NilCode,
+	1:  TrueCode,
+	2:  FalseCode,
 	3:  BooleanArray8Code,
 	4:  BooleanArray16Code,
 	5:  BooleanArray32Code,
